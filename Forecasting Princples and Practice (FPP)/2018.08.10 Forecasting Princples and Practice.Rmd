@@ -1,14 +1,14 @@
 ---
 title: "Forecasting Princples and Practice"
 author: "Koji Mizumura"
-date: "August 10, 2018"
+date: "August 28, 2018(Beg) - "
 output:
-  word_document:
-    toc: yes
   html_document:
-    theme: cosmo
+    theme: lumen
     toc: yes
     toc_float: yes
+  word_document:
+    toc: yes
 ---
 
 # Resources 
@@ -95,7 +95,7 @@ There is a wide range of quantitative forecasting methods, often developed withi
 
 Most quantitative prediction problems use either time series data (collected at regular intervals over time) or cross-sectional data (collected at a single point in time). In this book we are concerned with forecasting future data, and we concentrate on the time series domain.
 
-#### 1) Time series forecasting
+### 1) Time series forecasting
 Examples of time series data include:
 
 - Daily IBM stock prices
@@ -127,7 +127,7 @@ The simplest time series forecasting methods use only information on the variabl
 
 Time series models used for forecasting include decomposition models, exponential smoothing models and ARIMA models. These models are discussed in Chapters 6, 7 and 8, respectively.
 
-#### 2) Predictor variables and time series forecastin
+### 2) Predictor variables and time series forecastin
 
 Predictor variables are often useful in time series forecasting. For example, suppose we wish to forecast the hourly electricity demand (ED) of a hot region during the summer period. A model with predictor variables might be of the form
 
@@ -165,19 +165,19 @@ https://otexts.org/fpp2/basic-steps.html
 
 A forecasting task usually involves five basic steps.
 
-#### Step1: Problem definition
+### Step1: Problem definition
 Often this is the most difficult part of forecasting. Defining the problem carefully requires an understanding of the way the forecasts will be used, who requires the forecasts, and how the forecasting function fits within the organisation requiring the forecasts. A forecaster needs to spend time talking to everyone who will be involved in collecting data, maintaining databases, and using the forecasts for future planning.
 
-#### Step2: Gather information
+### Step2: Gather information
 There are always at least two kinds of information required: (a) statistical data, and (b) the accumulated expertise of the people who collect the data and use the forecasts. Often, it will be difficult to obtain enough historical data to be able to fit a good statistical model. In that case, the judgmental forecasting methods of Chapter 4 can be used. Occasionally, old data will be less useful due to structural changes in the system being forecast; then we may choose to use only the most recent data. However, remember that good statistical models will handle evolutionary changes in the system; don’t throw away good data unnecessarily.
 
-#### Step3: Preliminary (exploratory) analysis
+### Step3: Preliminary (exploratory) analysis
 Always start by graphing the data. Are there consistent patterns? Is there a significant trend? Is seasonality important? Is there evidence of the presence of business cycles? Are there any outliers in the data that need to be explained by those with expert knowledge? How strong are the relationships among the variables available for analysis? Various tools have been developed to help with this analysis. These are discussed in Chapters 2 and 6.
 
-#### Step4: Choosing and fitting models
+### Step4: Choosing and fitting models
 The best model to use depends on the availability of historical data, the strength of relationships between the forecast variable and any explanatory variables, and the way in which the forecasts are to be used. It is common to compare two or three potential models. Each model is itself an artificial construct that is based on a set of assumptions (explicit and implicit) and usually involves one or more parameters which must be estimated using the known historical data. We will discuss regression models [Chapter 5](https://otexts.org/fpp2/regression.html#regression), exponential smoothing methods [Chapter 7](https://otexts.org/fpp2/expsmooth.html#expsmooth), Box-Jenkins ARIMA models [Chapter 8](https://otexts.org/fpp2/arima.html#arima),Dynamic regression models[Chapter 9](https://otexts.org/fpp2/dynamic.html#dynamic), Hierarchical forecasting [Chapter 10](https://otexts.org/fpp2/hierarchical.html#hierarchical), and several advanced methods including neural networks and vector autoregression in [Chapter 11](https://otexts.org/fpp2/advanced.html#advanced).
 
-#### Step5: Using an evaluating a forecasting model
+### Step5: Using an evaluating a forecasting model
 Once a model has been selected and its parameters estimated, the model is used to make forecasts. The performance of the model can only be properly evaluated after the data for the forecast period have become available. A number of methods have been developed to help in assessing the accuracy of forecasts. There are also organisational issues in using and acting on the forecasts. A brief discussion of some of these issues is given in Chapter 3. When using a forecasting model in practice, numerous practical issues arise such as how to handle missing values and outliers, or how to deal with short time series. These are discussed in Chapter 12.
 
 ## 1.7 The statistical forecasting perspective
@@ -217,7 +217,7 @@ When we talk about the “forecast”, we usually mean the average value of the 
 
 It is often useful to specify exactly what information we have used in calculating the forecast. Then we will write, for example, $\hat{y}_{t|t-1}$ to mean the forecast of $y_t$ taking account of all previous observations $(y_1,\dots,y_{t-1})$. Similarly, $\hat{y}_{T+h|T}$ means the forecast of $y_{T+h}$ taking account of $y_1,\dots,y_T$ (i.e., an $h$-step forecast taking account of all observations up to time $T$).
 
----
+
 # Chapter 2: Time series graphics
 
 The first thing to do in any data analysis task is to plot the data. Graphs enable many features of the data to be visualised, including patterns, unusual observations, changes over time, and relationships between variables. The features that are seen in plots of the data must then be incorporated, as much as possible, into the forecasting methods to be used. Just as the type of data determines what forecasting method to use, it also determines what graphs are appropriate. But before we produce graphs, we need to set up our time series in R.
@@ -307,13 +307,13 @@ Here, there is a clear and increasing trend. There is also a strong seasonal pat
 ## 2.3 Time series patterns {#tspatterns}
 In describing these time series, we have used words such as "trend" and "seasonal" which need to be defined more carefully.
 
-#### Trend
+### Trend
 A trend exists when there is a long-term increase or decrease in the data. It does not have to be linear. Sometimes we will refer to a trend as “changing direction”, when it might go from an increasing trend to a decreasing trend. There is a trend in the antidiabetic drug sales data shown in Figure 2.2.
 
-#### Seasonal
+### Seasonal
 A seasonal pattern occurs when a time series is affected by seasonal factors such as the time of the year or the day of the week. Seasonality is always of a fixed and known frequency. The monthly sales of antidiabetic drugs above shows seasonality which is induced partly by the change in the cost of the drugs at the end of the calendar year.
 
-#### Cyclic
+### Cyclic
 A cycle occurs when the data exhibit rises and falls that are not of a fixed frequency. These fluctuations are usually due to economic conditions, and are often related to the “business cycle”. The duration of these fluctuations is usually at least 2 years.
 
 Many people confuse cyclic behaviour with seasonal behaviour, but they are really quite different. If the fluctuations are not of a fixed frequency then they are cyclic; if the frequency is unchanging and associated with some aspect of the calendar, then the pattern is seasonal. In general, the average length of cycles is longer than the length of a seasonal pattern, and the magnitudes of cycles tend to be more variable than the magnitudes of seasonal patterns.
@@ -413,7 +413,7 @@ data.frame(elecdemand) %>%
 
 This scatterplot helps us to visualise the relationship between the variables. It is clear that high demand occurs when temperatures are high due to the effect of air-conditioning. But there is also a heating effect, where demand increases for very low temperatures.
 
-#### Correlation
+### Correlation
 It is common to compute *correlation coefficient* to measure the strength of the relationship between two variables. The correlation between variable $x$ and $y$ is given by:
 $$
  r_{k} = \frac{\sum (x_{t}-\bar{x})(y_{t}-\bar{y})}
@@ -426,7 +426,7 @@ The correlation coefficient only measures the strength of the linear relationshi
 
 The plots in Figure 2.10 all have correlation coefficients of 0.82, but they have very different relationships. This shows how important it is look at the plots of the data and not simply rely on correlation values.  
 
-#### Scatterplot matrices
+### Scatterplot matrices
 When there are several potential predictor variables, it is useful to plot each variable against each other variable. Consider the five time series shown in Figure 2.11, showing quarterly visitor numbers for five regions of New South Wales, Australia.
 
 ```{r}
@@ -502,7 +502,7 @@ In this graph:
 - $r_2$ is more negative than for the other lags because troughs tend to be two quarters behind peaks.
 - The dashed blue lines indicate whether the correlations are significantly different from zero. These are explained in Section 2.9.
 
-#### Trend and seasonality in ACF plots
+### Trend and seasonality in ACF plots
 When data have a trend, the autocorrelations for small lags trend to be large and positive because observations nearby in time are also nearby in size. Thus the ACF of trended time series tend to have positive values that slowly decrease as the large increase.
 
 When data are seasonal, the autocorrelation will be larger  for the seasonal lags(at multiples of the seasonal frequency) than for other lags.
@@ -569,7 +569,7 @@ library(forecast)
 
 a) Read the data into R with the following script:
 ```{r}
-tute1 <- read_csv("C:/Users/kojikm.mizumura/Desktop/Data Science/4. Forecasting Princples and Practice/tute1.csv")
+tute1 <- read_csv("C:/Users/kojikm.mizumura/Desktop/Data Science/Forecasting Princples and Practice (FPP)/tute1.csv")
 head(tute1)
 ```
 
@@ -592,7 +592,7 @@ autoplot(mytimeseries,facet=TRUE)+
 
 a) You can read the data into R with the following script
 ```{r}
-retaildata <- readxl::read_excel("C:/Users/kojikm.mizumura/Desktop/Data Science/4. Forecasting Princples and Practice/retail.xlsx",skip=1)
+retaildata <- readxl::read_excel("C:/Users/kojikm.mizumura/Desktop/Data Science/Forecasting Princples and Practice (FPP)/retail.xlsx",skip=1)
 head(retaildata)
 ```
 
@@ -732,7 +732,7 @@ library(tidyverse)
 ## 3.1 some simple forecasting methods
 Some forecasing methods are extremely simple and surprisingly effective. We will use the following four forecasing methods as benchmarks throughout this book.
 
-#### Average method
+### Average method
 Here, the forecasts of all future values are equal to the average (or "mean") of the historical data. If we let the historical data be denoted by $y_1,...,y_T$ then we can write the forecasts as 
 $$
  \hat{y}_{T+h|T} = \bar{y} = (y_{1}+\dots+y_{T})/T.
@@ -745,7 +745,7 @@ meanf(y,h)
 # h is the forecast horizon
 ```
 
-#### Naive method
+### Naive method
 For naive forecasts, we simply set all forecasts to be the value of the last observation. That is,
 $$
 \hat{y}_{T+h|T}=y_{T}
@@ -759,7 +759,7 @@ rwf(y,h)
 
 Because a naive forecast is optimal when data follow a random walk (see Section 8.1), these are also called random walk forecast.
 
-#### Seasonal naive method
+### Seasonal naive method
 A similar method is useful for highly seasonal data. In this case, we set each forecast to be equal to the last observed value from the same season of the year(e.g., the same month of the previous year). Formally, the forecast of time $T+h$ is written as 
 $$
 \hat{y}_{T+h|T}=y_{T+h-m(k+1)}
@@ -772,7 +772,7 @@ For example ,with monthly data, the forecast for all future February values is e
 snaive(y,h)
 ```
 
-#### Drift method
+### Drift method
 A variation on the naïve method is to allow the forecasts to increase or decrease over time, where the amount of change over time (called the drift) is set to be the average change seen in the historical data. Thus the forecast for time $T+h$ is given by
 $$
   \hat{y}_{T+h|T} = y_{T} + \frac{h}{T-1}\sum_{t=2}^T (y_{t}-y_{t-1}) = y_{T} + h \left( \frac{y_{T} -y_{1}}{T-1}\right).
@@ -783,7 +783,7 @@ This is equivalent to drawing a line between the first and last observations, an
 rwf(y,j,drift=TRUE)
 ```
 
-#### Examples
+### Examples
 Figure 3.1 shows the first three methods applied to the quarterly beer production data.
 ```{r include=FALSE}
 library(forecast)
@@ -809,7 +809,10 @@ autoplot(beer2)+
 ```
 
 In Figure 3.2, the non-seasonal methods are applied to a series of 200 days of the Google daily closing stock price.
-```{r}
+```{r djf, fig.cap="Forecasts based on 250 days of the Dow Jones Index.", message=FALSE, warning=FALSE}
+# set training data to first 250 days
+dj2 <- window(dj,end=250)
+
 autoplot(goog200) +
   autolayer(meanf(goog200, h=40),
     series="Mean", PI=FALSE) +
@@ -828,7 +831,677 @@ Sometimes one of these simple methods will be the best forecasting method availa
 
 Adjusting the historical data can often lead to a simpler forecasting task. Here, we deal with four kinds of adjustments: calendar adjustments, population adjustments, inflation adjustments and mathematical transformations. The purpose of these adjustments and transformations is to simplify the patterns in the historical data by removing known sources of variation or by making the pattern more consistent across the whole data set. Simpler patterns usually lead to more accurate forecasts.
 
-#### Calendar adjustments
+### Calendar adjustments
 Some of the variation seen in seasonal data may be due to simple calender effects. In such cases, it is usually much easier to remove the variation before fitting a forecasting model. The `monthdays()` function will compute the number of days in each month or quarter.
 
-For example, if you are studying the monthly milk production on a farm.
+For example, if you are studying the monthly milk production on a farm, there will be variation between the months simply because of the different numbers of days in each month, in addition to the seasonal variation across the year.
+
+```{r cowmilk, fig.cap="Monthly milk production per cow. Source: @Cryer2008."}
+dframe <- cbind(Monthly = milk, DailyAverage=milk/monthdays(milk)) 
+  autoplot(dframe, facet=TRUE) + xlab("Years") + ylab("Pounds") +
+    ggtitle("Milk production per cow")
+```
+
+
+Notice how much simpler the seasonal pattern is in the average daily production plot compared to the average monthly production plot. By looking at the average daily production instead of the average monthly production, we effectively remove the variation due to the different month lengths. Simpler patterns are usually easier to model and lead to more accurate forecasts.
+
+A similar adjustment can be done for sales data when the number of trading days in each month varies. In this case, the sales per trading day can be modelled instead of the total sales for each month.
+
+### Population adjustments
+Any data that are affected by population changes can be adjusted to give per-capita data. That is, consider the data per person (or per thousand people, or per million people) rather than the total. For example, if you are studying the number of hospital beds in a particular region over time, the results are much easier to interpret if you remove the effects of population changes by considering the number of beds per thousand people. Then you can see whether there have been real increases in the number of beds, or whether the increases are due entirely to population increases. It is possible for the total number of beds to increase, but the number of beds per thousand people to decrease. This occurs when the population is increasing faster than the number of hospital beds. For most data that are affected by population changes, it is best to use per-capita data rather than the totals.
+
+### Inflation adjustments 
+
+Data which are affected by the value of money are best adjusted before modelling. For example, the average cost of a new house will have increased over the last few decades due to inflation. A $200,000 house this year is not the same as a $200,000 house twenty years ago. For this reason, financial time series are usually adjusted so that all values are stated in dollar values from a particular year. For example, the house price data may be stated in year 2000 dollars.
+
+To make these adjustments, a price index is used. If $z_t$ denotes the price index and $y_t$  denotes the original house price in year $t$, then $x_t=y_t/z_t∗z_{2000}$
+  gives the adjusted house price at year 2000 dollar values. Price indexes are often constructed by government agencies. For consumer goods, a common price index is the Consumer Price Index (or CPI)
+
+### Mathematical transformations
+If the data show variation that increases or decreases with the level of the series, then a transformation can be useful. For example, a logarithmic transformation is often useful. If we denote the original observations as $y_{1},\dots,y_{T}$ and the transformed observations as $w_{1}, \dots, w_{T}$, then $w_t = \log(y_t)$. Logarithms are useful because they are interpretable: changes in a log value are relative (or percentage) changes on the original scale. So if log base 10 is used, then an increase of 1 on the log scale corresponds to a multiplication of 10 on the original scale. Another useful feature of log transformations is that they constrain the forecasts to stay positive on the original scale.
+
+Sometimes other transformations are also used (although they are not so interpretable). For example, square roots and cube roots can be used. These are called *power transformations* because they can be written in the form $w_{t} = y_{t}^p$.
+
+A useful family of transformations, that includes both logarithms and power transformations, is the family of "Box-Cox transformations", which depend on the parameter $\lambda$ and are defined as follows:
+$$
+  w_t  =
+    \begin{cases}
+      \log(y_t) & \text{if $\lambda=0$};  \\
+      (y_t^\lambda-1)/\lambda & \text{otherwise}.
+    \end{cases}
+$$
+
+The logarithm in a Box-Cox transformation is always a natural logarithm (i.e., to base $e$). So if $\lambda=0$, natural logarithms are used, but if $\lambda\ne0$, a power transformation is used, followed by some simple scaling.
+
+If $\lambda=1$, then $w_t = y_t-1$, so the transformed data is shifted downwards but there is no change in the shape of the time series. But for all other values of $\lambda$, the time series will change shape.
+```{r choosechild, echo=FALSE,,eval=FALSE}
+childdoc <- ifelse(knitr:::pandoc_to()=="html",
+   "03-BoxCox-Shiny.Rmd", "03-donothing.Rmd")
+```
+
+{r BoxCoxShiny, child=childdoc,eval=FALSE}
+
+A good value of $\lambda$ is one which makes the size of the seasonal variation about the same across the whole series, as that makes the forecasting model simpler. In this case, $\lambda=0.30$ works quite well, although any value of $\lambda$ between 0 and 0.5 would give similar results.
+
+
+The `BoxCox.Lambda` function will choose a value of lambda for your.
+
+```{r BoxCoxLambda, echo=TRUE}
+(lambda <- BoxCox.lambda(elec))
+autoplot(BoxCox(elec,lambda))
+```
+
+Having chosen a transformation, we need to forecast the transformed data. Then, we need to reverse the transformation (or *back-transform*) to obtain forecasts on the original scale. The reverse Box-Cox transformation is given by
+\begin{equation}
+(\#eq:backtransform)
+  y_{t} =
+    \begin{cases}
+      \exp(w_{t}) & \text{if $\lambda=0$};\\
+      (\lambda w_t+1)^{1/\lambda} & \text{otherwise}.
+    \end{cases}
+\end{equation}
+
+
+### Features of power transformations
+
+- If some $y_t≤0, no power transformation is possible unless all observations are adjusted by adding a constant to all values.
+- Choose a simple value of $λ$. It makes explanations easier.
+- The forecasting results are relatively insensitive to the value of $λ$.
+- Often no transformation is needed.
+- Transformations sometimes make little difference to the forecasts but have a large effect on prediction intervals.
+
+### Bias adjustments
+One issue with using mathematical transformations such as Box-Cox transformations is that the back-transformed forecast will not be the mean of the forecast distribution. In fact, it will usually be the median of the forecast distribution (assuming that the distribution on the transformed space is symmetric). For many purposes, this is acceptable, but occasionally the mean forecast is required. For example, you may wish to add up sales forecasts from various regions to form a forecast for the whole country. But medians do not add up, whereas means do.
+
+For a Box-Cox transformation, the back-transformed mean is given by
+\begin{equation}
+(\#eq:backtransformmean)
+y_t =
+  \begin{cases}
+     \exp(w_t)\left[1 + \frac{\sigma_h^2}{2}\right] & \text{if $\lambda=0$;}\\
+     (\lambda w_t+1)^{1/\lambda}\left[1 + \frac{\sigma_h^2(1-\lambda)}{2(\lambda w_t+1)^{2}}\right] & \text{otherwise;}
+  \end{cases}
+\end{equation}
+
+where, $\sigma_h^2$ is the $h$-step forecast variance. The larger the forecast variance, the bigger the difference between the mean and the median.
+
+The difference between the simple back-transformed forecast given by (3.1) and the mean given by (3.2) is called the **bias**. When we use the mean, rather than the median, we say the point forecasts have been **bias-adjusted**.
+
+To see how much difference this bias-adjustment makes, consider the following example, where we forecast average annual price of eggs using the drift method with a log transformation ($\lambda=0$). The log transformation is useful in this case to ensure the forecasts and the prediction intervals stay positive.
+```{r biasadjust, message=FALSE, cache=TRUE, echo=TRUE}
+fc <- rwf(eggs,drift=TRUE,lambda=0,h=50,level=80)
+fc2 <- rwf(eggs,drift=TRUE,lambda=0,h=50,level=80,
+           biasad=TRUE)
+
+autoplot(eggs)+
+  autolayer(fc,series="Simple back transformation")+
+  autolayer(fc2,series="Bias adjusted",PI=FALSE)+
+  guides(colour=guide_legend(title="Forecast"))
+```
+
+The blue line in Figure 3.4 shows the forecast medians while the red line shows the forecast means. Notice how the skewed forecast distribution pulls up the point forecast when we use the bias adjustment.
+
+Bias adjustment is not done by default in the forecast package. If you want your forecasts to be means rather than medians, use the argument biasadj=TRUE when you select your Box-Cox transformation parameter.
+
+## 3.3 Residual diagnostics
+### Fitted values
+Each observation in a time series can be forecast using all previous observations. We call these **fitted values** and they are denoted by $\hat{y}_{t|t-1}$, meaning the forecast of $y_t$ based on observations $y_1$,...,$y_{t-1}$. We use these so often, we sometimes drop part of the subscript and just write  
+$\hat{y_t}$ instead of $\hat{y_{t|t-1}}$. Fitted values always involve one-step forecasts.
+
+Actually, fitted values are often not true forecasts because any parameters involved in the forecasting method are estimated using all available observations in the time series, including future observations.
+
+For example, if we use the average method, the fitted values are given by:
+$$
+\hat{y_t}=\hat{c}
+$$
+
+, where $\hat{c}$ is the average computed over all available observations, including those at times *aftert*. Similarly, for the drift method, the drift parameter is estimated using all available observations. In this case, the fitted values are given by
+$$
+\hat{y_t}=y_{t-1}+\hat{c}
+$$
+, where $\hat{c}=(y_T-y_1)/(T-1)$. In both cases, there is a parameter to be estimated from the data. The "hat" above the *c* reminds us that this is an estimate. 
+
+
+When the estimate of *c* involves observation after time *t*, the fitted values are not true forecasts. On the other hand, naive or seasonal naive forecasts do not involve any parameters, and so fitted values are true forecasts in such cases.
+
+### Residuals
+The "residuals" in a time series model are what is left over after fitting a model. For many (but not all) time series models, the residuals are equal to the difference between the observations and the correspondending fitted values:
+$$
+e_t = y_t - \hat{y_t}
+$$
+
+Residuals are useful in checking whether a model has adequately captured the information in the data. A good forecasting method will yield residuals with the following properties:
+
+1. The residuals are uncorrelated. If there are correlations between residuals, then there is information left in the residual which should be used in computing forecasts.
+2. The reisiduals have zero mean. If the residuals have a mean other than zero, then the forecasts are biased.
+
+Any forecasting method that does not satisfy these properties can be improved. However, that does not mean that forecasting methods that satisfy these properties cannot be improved. 
+
+It is possible to have several different forecasting methods for the same data set, all of which satisfy these properties. Checking these properties is important in order to see whether a method is using all of the available information, but it is not a good way to select a forecasting method
+
+If either of these properties is not satisfied, then the forecasting method can be modified to give better forecasts. Adjusting for bias is easy: if the residuals have mean  
+*m*, then simply add *m* to all forecasts and the bias problem is solved. Fixing the correlation problem is harder, and we will not address it until Chapter 9.
+
+In addition to these essential properties, it is useful (bot not necessary) for the residuals to also have the following two properties.
+
+3. The residuals have constant variance.
+4. The residuals are normally distributed.
+
+These two properties make the calculation of prediction intervals easier (see Section 3.5). However, a forecasting method that does not satisfy these properties annot necessarily be improved. Sometimes applying a **Box-Cox transformation** may assist with these properties, but otherwise there is usually little that you can do to ensure that your residuals have constant variance and a normal distribution. Instead, an alternative approach to obtaining prediction intervals is necessary. Again, we will not address how to do this until later in the book.
+
+### Example: Forecasting the Google daily closing stock price
+For stock market prices and indexes, the best forecasting method is often the **naive method**. That is, each forecast is simply equal to the last observied value, $\hat{y_t}=y_{t-1}$. Hence, the residuals are simply equal to the difference between consecutive observations:
+$$
+e_t=y_t-\hat{y_t}=y_t-y_{t-1}
+$$
+
+The following graph shows the Google daily closing stock price (GOOG). The large jump at day 166 corresponds to 18 October 2013 when the price jumped 12% due to unexpectedly strong third quarter results.
+
+```{r Goog200plot, fig.cap="Figure 3.5: The daily Google stock price to 6 Dec 2013"}
+autoplot(goog200)+
+  xlab("Day")+
+  ylab("Closing Price (USD$)")+
+  ggtitle("Google Stock (daily ending 6 December 2013)")
+
+goog200 %>% 
+  naive() %>% 
+  autoplot()
+```
+
+```{r Goog200resid,fig.cap="Figure 3.6: Residuals from forecasting the Google stock price using the naïve method."}
+res <- residuals(naive(goog200))
+autoplot(res)+
+  labs(
+    x="Day",
+    y=""
+  )+
+  ggtitle("Residuals from naive method")
+
+```
+
+```{r}
+gghistogram(res) + ggtitle("Histogram of residuals")
+```
+
+```{r}
+ggAcf(res)+
+  ggtitle("ACF of residuals")
+```
+
+Old example from Dow Jones(`dj`) data.
+
+```{r DJresid, fig.cap="Residuals from forecasting the Dow Jones Index using the naïve method."}
+
+dj2 <- window(dj,end=250)
+head(dj2,10)
+autoplot(dj2)+
+  labs(
+    x="Day",
+    y=""
+  )+
+  ggtitle("Dow Jones Index(daily ending 15 Jul 94)")
+
+res2 <- residuals(naive(dj2))
+autoplot(res)+
+  labs(
+    x="Day",
+    y=""
+  )+
+  ggtitle("Residuals from naive method")
+```
+
+```{r DJhist, fig.cap="Histogram of the residuals from the naïve method applied to the Dow Jones Index. The left tail is a little too long for a normal distribution.", warning=FALSE, message=FALSE}
+gghistogram(res2) + ggtitle("Histogram of residuals")
+```
+
+```{r DJacf, fig.cap="ACF of the residuals from the naïve method applied to the Dow Jones Index. The lack of correlation suggesting the forecasts are good.", fig.asp=0.35}
+ggAcf(res) + ggtitle("ACF of residuals")
+```
+
+These graphs show that the naive method produces forecasts that appear to account for all available information. The mean of the residuals is close to zero, and there is no significant correlation in the residual series. 
+
+The time plot of the residuals shows that the variation can be treated as constant. This can be seen on the histogram of the residuals. The hisogram suggests that the residuals may not be normal — the right tail seems a little too long, even when we ignore the outlier. Consequently, forecasts from this method will probably be quite good, but prediction intervals that are computed assuming a normal distribution may be inaccurate.
+
+### Portmanteau tests for autocorrelation
+In addition to looking at the ACF plot, we can also do more formal test for autocorrelation by considering a whole set of $r_{k}$ values as a group, rather than treating each one separately. 
+
+Recal that $r_{k}$ is the autocorrelation for lag $k$. When we look at the ACF plot to see whether each spike is within the required limits, we are implicitly carrying out multiple **hypothesis tests**, each one with a small probability of giving a false positive. When enough of these tests are done, it is likely that at least one will give a false positive, and so we may conclude that the residuals have some remaining autocorrelation, when in fact they do not.
+
+In order to overcome this problem, we test whether the first $h$ autocorrelations are significantly different from what would be expected from a white noise process. A test for a group of autocorrelation is called a **portmanteau test** from a French word describing a suitcase containing number of items.
+
+One such test is the **Box-Pierce test**, based on the following statistic
+$$
+Q=T\Sigma_{k=1}^h r_{k}^2
+$$
+, where $h$ is the maximum lag being considered and $T$ is the number of observations. If each $r_k$ is close to zero, then $Q$ will be small. IF some $r_k$ values are large, then $Q$ will be large.
+
+We suggest using $h=10$ for non-seasonal data and $h=2m$ for seasonal data, where $m$ is the period of seasonality. However, the test is not good when $h$ is large, so if these values are larger than $T/5$ then use $h=T/5$
+
+A related (and more accurate) test is the **Ljung-Box test**, based on
+$$
+Q^*=T(T+2)\Sigma_{k=1}^h(T-k)^{-1}r_k^2
+$$
+
+Again, **larger** values of $Q*$ suggests that the autocorrelation do not come from a white noise. 
+
+How large is too large? If the autocorrelation did come form a white noise series, then both Q and Q* would have a $\chi^2$ distribution with $(h-K)$ degrees of freedom, where $K$ is the number of parameters in the model. If they are calculated from raw data (rather than the residuals from a model), then set $K=0$.
+
+For the Google stock price example, the naive model has no parameters, so **K=0** in that case also. 
+```{r Boxtest}
+# Lag=h and fitdf=K
+Box.test(res,lag=10,fitdf=0)
+
+Box.test(res,lag=10,fitdf=0,type="Lj")
+```
+
+For both $Q$ and $Q*$, the results are not significant(i.e.,the p-values are relatively large). Thus, we can conclude that the residuals are not ditinguishable from a white noise series.
+
+All of these methods for checking residuals are conveniently packaged into one R function `checkresiduals()`, which will produce a time plot, ACF plot and histogram of the residuals (with an overlaid normal distribution for comparison), and do a Ljung=Box test with the correct degrees of freedom.
+```{r checkresiduals, warning=FALSE}
+checkresiduals(naive(goog200))
+```
+
+## 3.4 Evaluation forecast accuracy
+### Training and test sets
+
+It is important to evaluate forecast accuracy using genuine forecasts. Consequently, the size of the residuals is not a reliable indication of how large true forecast errors are likely to be. The accuracy of forecasts can only be determined by considering how well a model performs on new data that were not used when fitting the model.
+
+When choosing models, it is common practice to **separate** the available data into two portions, **training** and **test** data, where the training data is used to estimate any parameters of a forecasting method and the test data is used to evaluate its accuracy. Because the test data is not used in determining the forecasts, it should provide a reliable indication of how well the model is likely to forecast on new data.
+
+The size of the test set is typically about 20% of the  total sample, although this value depends on how long the sample is and how far ahead you want to forecast. The test should ideally be at least as large as the maximum forecast horizon required. The following points should be noted.
+
+- A model which fits the training data well will not necessarily forecast well.
+- A perfect fit can always be obtained by using a model with enough parameters.
+- **Over-fitting** a model to data is just as bad as failing to identify a systematic pattern in the data.
+
+Some references describe the test set as the “hold-out set” because these data are “held out” of the data used for fitting. Other references call the training set the “in-sample data” and the test set the “out-of-sample data”. We prefer to use “training data” and “test data” in this book.
+
+### Functions to subset a time series
+The `windows` function introduced in Chapter2 is useful when extracting a portion of a time series, such as we need when creating training and test sets. In the `window()`, we specify the start and/or end of th portion of time series requred using time values. for example,
+```{r}
+window(ausbeer,start=1995)
+```
+
+extracts all data from 1995 onward. 
+
+Another useful function is `subset()` which allows for more types of subsetting. A great advantage of this function is that it allows the use of indices to choose a subset. For example,
+```{r}
+subset(ausbeer,start=length(ausbeer)-4*5)
+```
+
+extracts the last 5 years of observation from `ausbeer`. It also allows extracting all values for a specific reason. For example,
+```{r}
+subset(ausbeer,quarter=1)
+```
+
+Finally, `head` and `tail` are useful for extracting the first few or last few observations. For example, the last 5 years of ausbeer can also be obtained using
+```{r}
+tail(ausbeer,4*5)
+```
+
+### Forecast errors
+A forecast “error” is the difference between an observed value and its forecast. Here “error” does not mean a mistake, it means the unpredictable part of an observation. It can be written as
+$$
+e_{T+h}=y_{T+h}-\hat{y_{T+h|T}}
+$$
+
+,where the training data is given by ${y_1,...,y_T}$ and the test data is given by $y_{T+1},y_{T+2},...$.
+
+Note that forecast errors are different from residuals in two ways. First, residuals are calculated on the $training set$ while forecast errors are calculated on the $test set$. Second, residuals are based on $one-step$ forecasts while forecast errors can involve multi-step forecasts.
+
+We can measure forecast accuracy by summarising the forecast errors in different ways.
+
+### Scale-dependent errors
+The forecast errors are on the same scale as the data. Accuracy measures that are based only on $e_t$ are therefore scale-dependent and cannot be used to make comparison between series that involve different units.
+
+The two most commonly used scale-dependent measures are based on the absolute errors or square errors:
+
+\begin{align*}
+  \text{Mean absolute error: MAE} & = \text{mean}(|e_{t}|),\\
+  \text{Root mean squared error: RMSE} & = \sqrt{\text{mean}(e_{t}^2)}.
+\end{align*}
+
+When comparing forecast methods applied to a single time series, or to several time series with the same units, the MAE is popular as it is easy to both understand and compute. A forecast method that minimises the MAE will lead to forecasts of the median, while minimising the RMSE will lead to forecasts of the mean. Consequently, the **RMSE** is also widely used, despite being more difficult to interpret.
+
+### Percentage errors
+  
+The percentage error is given by $p_t=100 e_t/y_t$ percentage errors have the advantage of being unit-free, and so are frequently used to compare forecast performances between data sets. The most commonly used measure is:
+$$
+  \text{Mean absolute percentage error: MAPE} = \text{mean}(|p_{t}|).
+$$
+
+Measures basedd on performance errors have the disadvantage of being infinite or underdefined if $y_t=0$ at any $t$ in the period of interest, , and having extreme values if any $y_t$ is close to zero. Another problem with percentage errors that is often overlooked is that they assume the unit of measurement has a meaningful zero. 
+
+For example, a percentage error makes no sense when measuring the accuracy of temperature forecasts on either the Fahrenheit or Celsius scales, because temperature has an arbitrary zero point.
+
+They also hanve the disadvantage that they put a heavier penalty on negative errors than on positive errors. This observation led to the use of the so-called "symmetric" MAPE (sMAPE) proposed by Armstrong, which was used in the $M_3$ forecasting competition. It is defined by
+$$
+sMAPE=mean(200|y_t-\hat{y_t}|/(y_t+\hat{y_t}))
+$$
+
+However, if $y_t$ is close to zero, $y_t$ is also likely to be close to zero. Thus the measure still involves division by a number close to zero, making the calculation unstable. Also, the value of sMAPE can be negative, so  it is not really a measure of "absolute percentage error" at all.
+
+Hyndman & Koehler (2006) recommend that the sMAPE not be used. It is included here only because it is widely used, although we will not use it in this book.
+
+### Scaled errors
+
+Scaled errors were proposed by Hyndman & Koehler (2006) as an alternative to using percentage errors when comparing forecast accuracy across series with different units. They proposed scaling the errors based on the training MAE from a simple forecast method.
+
+For a non-seasonal time series, a useful way to define a scaled error uses naive forecasts:
+$$
+q_{j} = \frac{\displaystyle e_{j}}
+    {\displaystyle\frac{1}{T-1}\sum_{t=2}^T |y_{t}-y_{t-1}|}
+$$
+
+Because the numerator and denominator both involve values on the scale of the original data, $q_{j}$ is independent of the scale of the data. A scaled error is less than one if it arises from a better forecast than the average naïve forecast computed on the training data. Conversely, it is greater than one if the forecast is worse than the average naïve forecast computed on the training data.
+
+For seasonal time series, a scaled error can be defued using seasonal naive forecasts:
+$$
+  q_{j} = \frac{\displaystyle e_{j}}
+    {\displaystyle\frac{1}{T-m}\sum_{t=m+1}^T |y_{t}-y_{t-m}|}.
+$$
+
+
+The *mean absolute scaled error* si simply 
+$$
+MASE=mean([q_j])
+$$
+
+#### Examples
+```{r beeraccuracy, fig.cap="Forecasts of Australian quarterly beer production using data up to the end of 2007.", message=FALSE,warning=FALSE}
+
+beer2 <- window(ausbeer,start=1992,end=c(2007,4))
+beerfit1 <- meanf(beer2,h=10)
+beerfit2 <- rwf(beer2,h=10)
+beerfit3 <- snaive(beer2,h=10)
+autoplot(window(ausbeer, start=1992)) +
+  autolayer(beerfit1, series="Mean", PI=FALSE) +
+  autolayer(beerfit2, series="Naïve", PI=FALSE) +
+  autolayer(beerfit3, series="Seasonal naïve", PI=FALSE) +
+  xlab("Year") + ylab("Megalitres") +
+  ggtitle("Forecasts for quarterly beer production") +
+  guides(colour=guide_legend(title="Forecast"))
+```
+
+Figure 3.9 shows three forecasting methods applied to the quartely Australian beer production using data only to the end of 2007. The actual values for the period 2008-2010 are also shown. We compute the forecast accuracy measures for this period.
+
+
+```r
+beer3 <- window(ausbeer, start=2008)
+accuracy(beerfit1, beer3)
+accuracy(beerfit2, beer3)
+accuracy(beerfit3, beer3)
+```
+
+```{r beeraccuracytable, echo=FALSE}
+beer3 <- window(ausbeer, start=2008)
+tab <- matrix(NA,ncol=4,nrow=3)
+tab[1,] <- accuracy(beerfit1, beer3)[2,c(2,3,5,6)]
+tab[2,] <- accuracy(beerfit2, beer3)[2,c(2,3,5,6)]
+tab[3,] <- accuracy(beerfit3, beer3)[2,c(2,3,5,6)]
+colnames(tab) <- c("RMSE","MAE","MAPE","MASE")
+rownames(tab) <- c("Mean method", "Naïve method", "Seasonal naïve method")
+knitr::kable(tab, digits=2, booktabs=TRUE)
+```
+
+It is obvious from the graph that the seasonal naïve method is best for these data, although it can still be improved, as we will discover later. Sometimes, different accuracy measures will lead to different results as to which forecast method is best. However, in this case, all of the results point to the seasonal naïve method as the best of these three methods for this data set.
+
+To take a non-seasonal example, consider the Google stock price. The following graph shows the 200 observations ending on 6 Dec 2013, along with forecasts of the next 40 days obtained from three different methods.
+```{r djfc, fig.cap="Forecasts of the Dow Jones Index from 16 July 1994.", warning=FALSE}
+dj2 <- window(dj, end=250)
+djfc1 <- meanf(dj2, h=42)
+djfc2 <- rwf(dj2, h=42)
+djfc3 <- rwf(dj2, drift=TRUE, h=42)
+autoplot(dj) +
+  forecast::autolayer(djfc1$mean, series="Mean") +
+  forecast::autolayer(djfc2$mean, series="Naïve") +
+  forecast::autolayer(djfc3$mean, series="Drift") +
+  xlab("Day") + ylab("") +
+  ggtitle("Dow Jones Index (daily ending 15 Jul 94)") +
+  guides(colour=guide_legend(title="Forecast"))
+```
+
+```r
+dj3 <- window(dj, start=251)
+accuracy(djfc1, dj3)
+accuracy(djfc2, dj3)
+accuracy(djfc3, dj3)
+```
+```{r djaccuracytable, echo=FALSE}
+dj3 <- window(dj, start=251)
+tab <- matrix(NA,ncol=4,nrow=3)
+tab[1,] <- accuracy(djfc1, dj3)[2,c(2,3,5,6)]
+tab[2,] <- accuracy(djfc2, dj3)[2,c(2,3,5,6)]
+tab[3,] <- accuracy(djfc3, dj3)[2,c(2,3,5,6)]
+colnames(tab) <- c("RMSE","MAE","MAPE","MASE")
+rownames(tab) <- c("Mean method", "Naïve method", "Drift method")
+knitr::kable(tab, digits=2, booktabs=TRUE)
+```
+
+### Time series cross validation
+A more sophisticated version of training/test sets is time series cross-validation. In this procedure, there are a series of test sets, each consisting of a single observation. The corresponding training set consists only of observations that occurred prior to the observation that forms the test set. Thus, no future observations can be used in constructing the forecast. Since it is not possible to obtain a reliable forecast based on a small training set, the earliest observations are not considered as test sets.
+
+The following diagram illustrates the series of training and test sets, where the blue observations form the training sets, and the red observations form the test sets.
+
+The forecast accuracy is computed by averaging over the test sets. This procedure is sometimes known as “evaluation on a rolling forecasting origin” because the “origin” at which the forecast is based rolls forward in time.
+
+With time series forecasting, one-step forecasts may not be as relevant as multi-step forecasts. In this case, the cross-validation procedure based on a rolling forecasting origin can be modified to allow multi-step errors to be used. Suppose that we are interested in models that produce good $4$-step-ahead forecasts. Then the corresponding diagram is shown below.
+
+Time series cross-validation is implemented with the `tsCV()` function. In the following example, we compare the RMSE obtained via time series cross-validation with the residual RMSE.
+```{r cv1, echo=FALSE, fig.asp=0.47}
+e <- tsCV(dj,rwf,drift=TRUE,h=1)
+sqrt(mean(e^2,na.rm = TRUE))
+
+sqrt(mean(residuals(rwf(dj,drift=TRUE))^2,na.rm = TRUE))
+```
+
+As expected, the *RMSE* from the residuals is smaller, as the corresponding “**forecasts**” are based on a model fitted to the entire data set, rather than being true forecasts.
+
+A good way to choose the best forecasting model is to find the model with the smallest RMSE computed using time series cross-validation.
+
+### Pipe operator
+The ugliness of the above R code makes this a good opportunity to introduce some alternative ways of stringing R functions together. In the above code, we are nesting functions within functions within functions, so you have to read the code from the inside out, making it difficult to understand what is being computed. Instead, we can use the pipe operator `%>%` as follows.
+```{r}
+dj %>% tsCV(forecastfunction=rwf,drift=TRUE,h=1) ->e
+e^2 %>% mean(na.rm=TRUE) %>% sqrt()
+
+dj %>% rwf(drift=TRUE) %>% residuals() -> res
+res^2 %>% mean(na.rm=TRUE) %>% sqrt()
+```
+
+The left hand side of each pipe is passed as the first argument to the function on the right hand side. This is consistent with the way we read from left to right in English. When using pipes, all other arguments must be named, which also helps readability. When using pipes, it is natural to use the right arrow assignment `->` rather than the left arrow. For example, the third line above can be read as “Take the `dj` series, pass it to `rwf()` with `drift=TRUE`, compute the resulting residuals, and store them as res”.
+
+We will use the pipe operator whenever it makes the code easier to read. In order to be consistent, we will always follow a function with parentheses to differentiate it from other objects, even if it has no arguments. See, for example, the use of `sqrt()` and `residuals()` in the code above.
+
+#### Example: using `tsCV()`
+The `dj` data, plotted in the above figure, includes daily closing stock price of Google Inc from the NASDAQ exchange for 200 consecutive trading days starting on 25 February 2013.
+
+The code below evaluates the forecasting performance of 1- to 8-step-ahead naïve forecasts with `tsCV()`, using MSE as the forecast error measure. The plot shows that the forecast error increases as the forecast horizon increases, as we would expect.
+```{r}
+e <- tsCV(goog200,forecastfunction = naive,h=8)
+# Comute the MSE values and remove missing values
+mse <- colSums(e^2,na.rm = TRUE)
+# Plot the MSE values against the forecast horizon
+data.frame(h=1:8,MSE=mse) %>% 
+  ggplot(aes(x=h,y=MSE))+
+  geom_point()+
+  geom_line()
+```
+
+#### Bibliography
+Armstrong, J. S. (1978). Long-range forecasting: From crystal ball to computer. John Wiley & Sons. [Amazon]
+
+Hyndman, R. J., & Koehler, A. B. (2006). Another look at measures of forecast accuracy. International Journal of Forecasting, 22, 679–688. https://robjhyndman.com/publications/automatic-forecasting/
+
+## 3.5 Prediction intervals
+As discussed in Section 1.7, a prediction interval gives an interval within which we expect $y_t$ to lie with a specified probability. 
+
+For example, assuming the forecast errors are normally distributed, a 95% prediction interval for the $h-$step forecast is
+$$
+\hat{y_{T+h|T}}+-1.96\hat{\sigma_h}
+$$
+
+, where $\hat{\sigma_h}$ is an estimate of the standard deviation of the $h$-step forecast distribution.
+
+More generally, a prediction interval can be written as
+$$
+\hat{y_{T+h|T}}+-c\hat{\sigma_h}
+
+$$
+here the multiplier $c$ depends on the coverage probability. In this book we usually calculate 80% intervals and 95% intervals, although any percentage may be used. The following table gives the value of $c$ for a range of coverage probabilities assuming normally distributed forecast errors.
+
+```{r pcmultipliers, echo=FALSE}
+p <- c(seq(50,95,by=5),96:99)
+tab <- data.frame(Percentage=p, Multiplier=qnorm(0.5+p/200))
+knitr::kable(tab, digits=2, booktabs=TRUE,
+             caption="Multipliers to be used for prediction intervals.")
+```
+
+The value of prediction intervals is that they express the uncertainty in the forecasts. If we only produce point forecasts, there is no way of telling how accurate the forecasts are. However, if we also produce prediction intervals, then it is clear how much uncertainty is associated with each forecast. For this reason, point forecasts can be of almost no value without the accompanying prediction intervals.
+
+### One-step prediction intervals
+When forecasting one step ahead, the standard deviation of the forecast distribution is almost the same as the standard deviation of the residuals (In fact, the two standard deviations are ientical if there are no parameters to be estimated, as is the case with the naive method. For forecasting methods involving parameters to be estimated, the standard deviation of the forecast distribution is slightly larger than the residual standard deviation, although this difference is often ignored.)
+
+```{r djpi, echo=FALSE}
+djsd <- sqrt(mean(res^2, na.rm=TRUE))
+djf <- tail(dj2,1)
+mult <- -qnorm(.5-c(80,95)/200)
+upper <- c(djf) + mult * djsd
+lower <- c(djf) - mult * djsd
+```
+
+For example, consider a naïve forecast for the Google stock price data goog200 (shown in Figure 3.5). The last value of the observed series is 531.48, so the forecast of the next value of the GSP is 531.48. The standard deviation of the residuals from the naïve method is 6.21. Hence, a 95% prediction interval for the next value of the GSP is
+
+$$
+  `r djf` \pm `r format(mult[2],digits=3)`(`r format(djsd,digits=2,nsmall=2)`) = [`r format(lower[2],digits=4)`, `r format(upper[2],digits=4)`].
+$$
+
+Similarly, an 80% prediction interval is given by
+$$
+  `r djf` \pm `r format(mult[1],digits=3)`(`r format(djsd,digits=2,nsmall=2)`) = [`r format(lower[1],digits=4)`, `r format(upper[1],digits=4)`].
+$$
+
+The value of the multiplier (1.96 or 1.28) is taken from Table \@ref(tab:pcmultipliers).
+
+### Multi-step prediction intervals
+
+A common feature of prediction intervals is that they increase in length as the forecast horizon increases. The further ahead we forecast, the more uncertainty is associated with the forecast, and thus the wider the prediction intervals. That is, $\sigma_h$ usually increases with $h$ (although there are some non-linear forecasting methods that do not have this property).
+
+To produce a prediction interval, it is necessary to have an estimate of $\sigma_h$. As already noted, for one-step forecasts ($h=1$),  the residual standard deviation provides a good estimate of the forecast standard deviation $\sigma_1$. For multi-step forecasts, a more complicated method of calculation is required. These calculations assume that the residuals are uncorrelated.
+
+### Benchmark methods
+
+For the four benchmark methods, it is possible to mathematically derive the forecast standard deviation under the assumption of uncorrelated residuals. If $\hat{\sigma}_h$ denotes the standard deviation of the $h$-step forecast distribution, and $\hat{\sigma}$ is the residual standard deviation, then we can use the following expressions.
+
+**Mean forecasts**: $\hat\sigma_h = \hat\sigma\sqrt{1 + 1/T}$
+
+**Naïve forecasts**: $\hat\sigma_h = \hat\sigma\sqrt{h}$
+
+**Seasonal naïve forecasts** $\hat\sigma_h = \hat\sigma\sqrt{\lfloor (h-1)/m \rfloor + 1}$.
+
+**Drift forecasts**: $\hat\sigma_h = \hat\sigma\sqrt{h(1+h/T)}$.
+
+Note that when $h=1$ and $T$ is large, these all give the same approximate value $\hat\sigma$.
+
+Prediction intervals will be computed for you when using any of the benchmark forecasting methods. For example, here is the output when using the naive method for the Dow-Jones index.
+```{r djforecasts, echo=TRUE}
+naive(dj2)
+```
+
+When plotted, the prediction intervals are shown as shaded region, with the strength of colour indicating the probability associated with the interval.
+
+```{r djforecasts2, echo=TRUE}
+autoplot(naive(dj2))
+```
+
+### prediction intervals from bootstrapped residuals
+
+When a normal distribution for the forecast errors is an unreasonable assumption, one alternative is to use bootstrapping, which only assumes that the forecast errors are uncorrelated.
+
+A forecast error is defined as $e_t = y_t - \hat{y}_{t|t-1}$. We can re-write this as
+$$
+  y_t = \hat{y}_{t|t-1} + e_t.
+$$
+
+So we can simulate the next observation of a time series using
+$$
+  y_{T+1} = \hat{y}_{T+1|T} + e_{T+1}
+$$
+
+where $\hat{y}_{T+1|T}$ is the one-step forecast and $e_{T+1}$ is the unknown future error. Assuming future errors will be similar to past errors, we can replace $e_{T+1}$ by sampling from the collection of errors we have seen in the past (i.e., the residuals). Adding the new simulated observation to our data set, we can repeat the process to obtain
+
+$$
+  y_{T+2} = \hat{y}_{T+2|T+1} + e_{T+2}
+$$
+
+where $e_{T+2}$ is another draw from the collection of residuals. Continuing in this way, we can simulate an entire set of future values for our time series.
+
+Doing this repeatedly, we obtain many possible futures. Then we can compute prediction intervals by calculating percentiles for each forecast horizon. The result is called a "bootstrapped" prediction interval. The name "bootstrap" is a reference to pulling ourselves up by our bootstraps, because the process allows us to measure future uncertainty by only using the historical data.
+
+To generate such intervals, we can simply add the `bootstrap` argument to our forecasting functions. For example:
+```{r djforecastboot, echo=TRUE}
+naive(dj2,bootstrap = T) 
+
+naive(dj2,bootstrap = T) %>% 
+  autoplot()
+```
+
+In this case, they are very similar (but not identical) to the prediction intervals based on the normal distribution.
+
+### Prediction intervals with transformations
+
+If a transformation has been used, then the prediction interval should be computed on the transformed scale, and the end points back-transformed to give a prediction interval on the original scale. This approach preserves the probability coverage of the prediction interval, although it will no longer be symmetric around the point forecast.
+
+The back-transformation of prediction intervals is done automatically using the functions in the `forecast` package in R, provided you have used the `lambda` argument when computing the forecasts.
+
+## 3.6 The forecast package in R
+This book uses the facilities in the **forecast** package in R (which is loaded automatically whenever you load the **fpp2** package). This appendix briefly summarises some of the features of the package. Please refer to the help files for individual functions to learn more, and to see some examples of their use.
+
+### Functions that output a forecast object:
+
+Many functions, including `meanf`, `naive`, `snaive` and `rwf`, produce output in the form of a `forecast` object (i.e., an object of class `forecast`). This allows other functions (such as `autoplot`) to work consistently across a range of forecasting models.
+
+Objects of class `forecast` contain information about the forecasting method, the data used, the point forecasts obtained, prediction intervals, residuals and fitted values. There are several functions designed to work with these objects including `autoplot`, `summary` and `print`.
+
+The following list shows all the functions that produce `forecast` objects.
+
+* `meanf()`
+ * `naive()`, `snaive()`
+ * `rwf()`
+ * `croston()`
+ * `stlf()`
+ * `ses()`
+ * `holt()`, `hw()`
+ * `splinef()`
+ * `thetaf()`
+ * `forecast()`
+
+### `forecast()` function
+So far we have used functions which produce a `forecast` object directly. But a more common approach, which we will focus on in the rest of the book, will be to fit a model to the data, and then use the `forecast()` function to produce forecasts from that model.
+
+The `forecast()` function works with many different types of input. It generally takes a time series or time series model as its main argument, and produces forecasts appropriately. It always returns objects of class `forecast`.
+
+If the first argument is of class `ts`, it returns forecasts from the automatic ETS algorithm discussed in Chapter \@ref(ch-expsmooth).
+
+Here is a simple example, applying `forecast()` to the `ausbeer` data:
+```{r ausbeerfc}
+ausbeer %>% 
+  as.data.frame() %>% 
+  tail(5)
+
+forecast(ausbeer)
+```
+
+That works quite well if you have no idea what sort of model to use. But by the end of this book, you should not need to use `forecast()` in this "blind" fashion. Instead, you will fit a model appropriate to the data, and then use `forecast()` to produce forecasts from that model.
+
+## Exercises
+**1.** For the following series, find an appropriate Box-Cox transformation in order to stabilise the variance.
+*`usenetelec`
+*`usgdp`
+*`mcopper`
+*`enplanements`
+
+2. Why is a Box-Cox transformation for the `cangas` data?
+
+
+
