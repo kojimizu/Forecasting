@@ -1,3 +1,6 @@
 
-Read.me
-Forecasting and Principles [https://otexts.org/fpp2/]
+
+## Forecasting and Principles  by Hyndman
+Package: `forecast` from CRAN
+Dataset: `fpp2` from CRAN
+Online: [https://otexts.org/fpp2/]
