@@ -23,6 +23,7 @@ output:
 ---
 This document is html_notebook output (not html_document).
 
+\pagenumbering{gobble}
 # Resources 
 [Forecasting: princples and practice](https://otexts.org/fpp2/)  
 [Slides](https://robjhyndman.com/seminars/uwa2017/)  
@@ -1462,4 +1463,811 @@ cbind("Regression Errors"=residuals(fit, type="regression"),
 ```
 
 It is the ARIMA errors that should resemble a white noise series. 
+```{r usconsumpres2, fig.cap="The residuals(ie the ARIMA errors) are not significantly different from white noise."}
+checkresiduals(fit)
+```
+
+## Forecasting
+To forecast a regression model with ARIMA errors, we need to forecast the regression part of the model and the ARIMA part of the model, and combine the results. As with ordinary regression models, in order to obtain forecasts we first need to forecast the predictors. When the predictors are known into the future (e.g., calendar-related variables such as time, day-of-week, etc.), this is straightforward. But when the predictors are themselves unknown, we must either model them separately, or use assumed future values for each predictor.
+
+### Example: US Personal consumption and income
+We will calculate forecasts for the next eight quarters assuming the future percentage changes in personal disposable income will be equal to the mean percentage change from the last forty years.
+
+```{r usconsump3, fig.cap="Forecasts obtained from regressing the percentage change in consumption expenditure on the percentage change in disposable income, with an ARIMA(1,0,2) error model."}
+
+fcast <- forecast(fit, xreg=rep(mean(uschange[,2]),8))
+autoplot(fcast) + xlab("Year") +
+  ylab("Percentage change")
+
+```
+
+The prediction intervals for this model are narrower than those for the model developed in Section \@ref(sec:nonseasonalarima) because we are now able to explain some of the variation in the data using the income predictor.
+
+It is important to realize that the prediction intervals from regression models (with and without ARIMA errors) do not take into account the uncertainty in the forecasts of the predictors. So they should be interpreted as being conditional on the assumed (or estimated) future values of the predictor variables.
+
+### Example: Forecasting electricity demand{-}
+Daily electricity demand can be modelled as a function of temperature. As can be observed on an electricity bill, more electricity is used on cold days due to heating and hot days due to air conditioning. The higher demand on cold and hot days is reflected in the u-shape of Figure \@ref(fig:elecscatter), where daily demand is plotted versus daily maximum temperature. 
+
+```{r elecscatter, echo=FALSE, fig.cap="Daily electricity demand versus maximum daily temparature for the state of Victoria in Australia for 2014"}
+
+elecdaily %>% 
+  as.data.frame() %>% 
+  ggplot(aes(x=Temperature, y=Demand))+
+  ylab("Electricity demand (GW")+
+  xlab("Maximum daily temperature")+
+  geom_point()+
+  geom_smooth()+
+  geom_smooth(method="lm",color="red", se=FALSE)
+```
+
+The data are stored as `elecdaily` including total daily demand, an indicator variable for workdays (a workday is represented with 1, and a non-workday is represented with 0), and daily maximum temperatures. Because there is weekly seasonality, the frequency has been set to 7. Figure \@ref(fig:electime) show the time series of both daily demand and daily maximum temperatures. The plots highlight the need for both a non-linear and also dynamic model. 
+
+```{r electime, echo=FALSE, fig.cap="Daily electricity demand and maximum daily temperature for the state of Victoria in Australia for 2014."}
+
+autoplot(elecdaily[,c("Demand","Temperature")],
+         facets=T, colour=T)+
+  xlab("")+guides(colour="none")
+
+```
+
+In this example, we fit a **quadratic regression model** with ARMA errors using the `auto.arima` function. Using the estimated model we forecast 14 days ahead starting from Thursday 1 January 2015 (a non-work-day being a public holiday for New Years Day).
+
+In this case, we could obtain weather forecasts from the weather bureau for the next 14 days. But for the sake of illustration, we will use scenario based forecasting (as introduced in Section \@ref(Regr-ForeWithRegr))) where we set the temperature for the next 14 days to a constant 26 degrees.
+
+```{r elecdailyfit}
+xreg <- bind_cols(MaxTemp=elecdaily[,"Temperature"],
+                  MaxTempSq=elecdaily[,"Temperature"]^2,
+                  Workday=elecdaily[,"WorkDay"])
+
+xreg %>% head(5)
+
+fit <- auto.arima(elecdaily[,"Demand"], xreg=xreg)
+```
+
+```{r}
+summary(fit)
+checkresiduals(fit)
+```
+
+The model has some significant autocorrelation in the residuals, which means the prediction intervals may not provide accurate coverage. Also, the histogram of the residuals shows one positive outlier, which will also affect the coverage of the prediction intervals.
+
+```{r elecdailyf}
+
+autoplot(elecdaily[,"Demand"],series="Data")+
+  autolayer(fitted(fit), series="Fitted")+
+  ylab("")+
+  ggtitle("Daily electricity demand(GW)")+
+  guides(colour=guide_legend(title=""))
+
+fcast <- forecast(fit, 
+  xreg = cbind(rep(26,14), rep(26^2,14), c(0,1,0,0,1,1,1,1,1,0,0,1,1,1)))
+autoplot(fcast) + ylab("Electicity demand (GW)") 
+```
+
+The point forecasts look reasonable for the first two weeks of 2015. The slow down in electricity demand at the end of 2014 has caused the forecasts for the next two weeks to show similarly low demand values.
+
+## Stochastic and deterministic trends
+There are two different ways of modeling a linear trend. A *deterministic trend* is obtained using the regression model
+$$
+y_t = \beta_0 + \beta_1t + n_t
+$$
+where where $n_t$ is an ARIMA process with $d=1$. In that case, we can difference both sides so that $y_t' = \beta_1 + n_t'$, where $n_t'$ is an ARMA process. In other words,
+
+$$
+  y_t = y_{t-1} + \beta_1 + n_t'.
+$$
+
+This is very similar to a random walk with drift, but here the error term is an ARMA process rather than simply white noise. 
+
+Although these models appear quite similar (they only differ in the number of differences that need to be applied to $n_t$), their forecasting characteristics are quite different.
+
+### Example: International visitors to Australia{-}
+```{r austa, fig.cap="Annual international visitors to Australia, 1980--2010."}
+autoplot(austa) + xlab("Year") +
+  ylab("millions of people") +
+  ggtitle("Total annual international visitors to Australia")
+```
+
+Figure \@ref(fig:austa) shows the total number of international visitors to Australia each year from 1980 to 2010. We will fit both a deterministic and a stochastic trend model to these data.
+
+The deterministic trend model is obtained as follows:
+```{r deterministictrend}
+trend <- seq_along(austa)
+(fit1 <- auto.arima(austa,d=0,xreg=trend))
+```
+
+This model can be written as
+\begin{align*}
+  y_t &= `r format(intercept,digits=2)` + `r format(slope, digits=2)` t + n_t \\
+  n_t &= `r format(phi1, digits=3)` n_{t-1} `r format(phi2, digits=2)` n_{t-2} + e_t\\
+  e_t &\sim \text{NID}(0,`r format(sigma2, digits=3)`).
+\end{align*}
+
+The estimated growth in visitor numbers is 0.17 millions people per year.
+
+Alternatively, the stochastic trend model can be estimated. 
+```{r stochastictrend}
+(fit2 <- auto.arima(austa,d=1))
+```
+
+```{r austaparams2, echo=FALSE}
+drift <- coef(fit2)['drift']
+theta1 <- coef(fit2)['ma1']
+sigma2 <- fit2$sigma2
+```
+
+This model can be written as $y_t-y_{t-1} = `r format(drift, digits=2)` + n'_t$, or equivalently
+\begin{align*}
+  y_t &= y_0 + `r format(drift, digits=2)` t + n_t \\
+  n_t &= n_{t-1} + `r format(theta1,digits=2, nsmall=2)` e_{t-1} + e_{t}\\
+  e_t &\sim \text{NID}(0,`r format(sigma2, digits=3)`).
+\end{align*}
+
+In this case, the estimated growth in visitor numbers is also 0.17 millions people per year. Although the growth estimates are similar, the prediction intervals are not, as Figure 9.10 shows. In particular, stochastic trends have much wider prediction intervals because the errors are non-stationary.
+
+```{r austaf, fig.cap="Forecasts of annual international visitors to Australia using a deterministic trend model and a stochastic trend model.", message=FALSE}
+
+fc1 <- forecast(fit1, xreg=data.frame(trend=length(austa)+1:10))
+fc2 <- forecast(fit2, h=10)
+autoplot(austa) +
+  forecast::autolayer(fc2, series="Stochastic trend") +
+  forecast::autolayer(fc1, series="Deterministic trend") +
+  ggtitle("Forecasts from deterministic and stochastic trend models") +
+  xlab("Year") + ylab("Visitors to Australia (millions)") +
+  guides(colour=guide_legend(title="Forecast"))
+
+```
+
+There is an implicit assumption with deterministic trends that the slope of the trend is not going to change over time. On the other hand, stochastic trends can change, and the estimated growth is only assumed to be the average growth over the historical period, not necessarily the rate of growth that will be observed into the future. Consequently, it is safer to forecast with stochastic trends, especially for longer forecast horizons, as the prediction intervals allow for greater uncertainty in future growth.
+
+## Dynamic harmonic regression {#sec-dhr}
+
+When there are long seasonal periods, a dynamic regression with Fourier terms is often better than other models we have considered in this book.
+
+For example, daily data can have annual seasonality of length 365, weekly data has seasonal period of approximately 52, while half-hourly data can have several seasonal periods, the shortest of which is the daily pattern of period 48.
+
+Seasonal versions of ARIMA and ETS models are designed for shorter periods such as 12 for monthly data or 4 for quarterly data. The `ets()` function restricts seasonality to be a maximum period of 24 to allow hourly data but not data with a larger seasonal frequency. The problem is that there are $m-1$ parameters to be estimated for the initial seasonal exactly a year ago and there is no constraint that the seasonal pattern is smooth. 
+
+So for such time series, we prefer a harmonic regression approach where the seasonal pattern is modelled using Fourier terms with short-term time series dynamics handled by an ARMA error.
+
+The advantages of this approach are: 
+ - it allows any length seasonality;
+ - for data with more than one seasonal period, you can include Fourier terms of different frequencies
+ - the seasonal pattern is smooth for small values of $K$ (but more wiggly seasonality can be handled by increasing $K$. 
+ - the short term dynamics are easily handled with a simple ARMA error.
+ 
+The only reall disadvanges (compared to a seasonal ARIMA model) is that the seasonality is assumed to be fixed --- the pattern is not alloed to change over time. But, in practice, seasonality is usually remarkably constant so this is not a big disadvantage except for very long time series.
+
+### Example: Australian eating out expenditure
+
+In this example we demonstrate combining **Fourier terms** for capturing seasonality with ARIMA errors capturing other dynamics in the data. We use `auscafe`, the total monthly expenditure on cafes, restaurants and takeaway food services in Australia (\$ billion), starting in 2004 up to November 2016 and we forecast 24 months ahead. We vary the number of Fourier terms from 1 to 6 (which is equivalent to including seasonal dummies). Figure \@ref(fig:eatout) shows the seasonal pattern projected forward as $K$ increases. Notice that as $K$ increases the Fourier terms capture and project a more "wiggly" seasonal pattern and simpler ARIMA models are required to capture other dynamics. The AICc value is maximised for $K=5$, with a significant jump going from $K=4$ to $K=5$,  hence the forecasts generated from this model would be the ones used.
+
+```{r eatout, fig.width=10, fig.asp=0.8, fig.cap="Using Fourier terms and ARIMA errors for forecasting monthly expenditure on eating out in Australia"}
+
+cafe04 <- window(auscafe, start=2004)
+
+plots <- list()
+for (i in 1:6){
+  fit <- auto.arima(cafe04, xreg=fourier(cafe04, K=i),seasonal=FALSE, lambda = 0)
+  plots[[i]] <- autoplot(forecast(fit,xreg = fourier(cafe04, K=i, h="4")))+
+    xlab(paste("K=",i,"AICC=",round(fit$aicc,2)))+ylab("")+ylim(1.5,4.7)
+}
+
+gridExtra::grid.arrange(plots[[1]],plots[[2]],plots[[3]],
+                        plots[[4]],plots[[5]],plots[[6]], nrow=3)
+```
+
+## Lagged predictors
+
+Sometimes, the impact of a predictor which is included in a regression model will not be simple and immediate. For example, an advertising campaign may impact sales for some time beyond the end of the campaign, and sales in one month will depend on the advertising expenditure in each of the past few months. Similarly, a change in a company&s safety policy many reduce accidends immediately, but have a diminishing effect over time as employee take less care when they become faimilar iwth the bew working conditions.
+
+In these situations, we need to allow for lagged effects of the predictor. Suppose we have only one predictor in our model. Then a model which allows for lagged effects can be written as
+$$
+y_t = \beta_0 + \gamma_0x_t + \gamma_1*x_{t_-1} + \dots +\gamma_k x_{t-k} +n_t
+
+$$
+
+where $n_t$ is an ARIMA process. The value of $k$ can be selected using the AICc, along with the values of $p$ and $q$ for the ARIMA error.
+
+
+### Example: TV advertising and insurance quotations {-}
+As US insurance company advertises on national television in an attempt to increase the number of insurance quotations provided (and consequently the number of new policies). Figure \@ref(fig:tvadvert) shows the number of quotations the expenditure on television advertising for the company each month from January 2002 to April 2005.
+
+```{r tvadvert, fig.cap="Numbers of insurance quotations provided per month and the expenditure on advertising per month."}
+
+autoplot(insurance, facets = T)+
+  xlab("Year")+ylab("")+
+  ggtitle("Insurance advertising and quotations")
+```
+
+We will consider including advertising expenditure for up to four months; that is, the model may include advertising expenditure in the curent month, and the three months before that. When comparing models, it is important that they all use the same training set. In the following code, we exclude the first three months in order to make fair comparisons. The best model is the one with the smallest AICc value.
+
+```{r tvadvert2, fig.cap="ARIMA models for insurance quotations with advertising as a predictor variable."}
+
+# Lagged predictors. Test 0, 1, 2 or 3 lags.
+Advert <- cbind(
+  AdLag0 = insurance[,"TV.advert"],
+  AdLag1 = stats::lag(insurance[,"TV.advert"],-1),
+  AdLag2 = stats::lag(insurance[,"TV.advert"],-2),
+  AdLag3 = stats::lag(insurance[,"TV.advert"],-3))[1:NROW(insurance),]
+
+# Choose optimal lag length for advertising based on AICc
+# Restrict data so models use same fitting period
+fit1 <- auto.arima(insurance[4:40,1], xreg=Advert[4:40,1], d=0)
+fit2 <- auto.arima(insurance[4:40,1], xreg=Advert[4:40,1:2], d=0)
+fit3 <- auto.arima(insurance[4:40,1], xreg=Advert[4:40,1:3], d=0)
+fit4 <- auto.arima(insurance[4:40,1], xreg=Advert[4:40,1:4], d=0)
+
+# Best model fitted to all data (based on AICc)
+# Refit using all data
+```
+
+Next, we choose the optimal lag length for advertising based on the AICc.
+```{r}
+c(fit1[["aicc"]],fit2[["aicc"]],fit3[["aicc"]],fit4[["aicc"]])
+```
+
+The best model (with the smallest AICc value) has two lagged predictors; that is, it includes advertising only in the current month and the previous month. So we now re-estimate that model, but using all the available data.
+```{r}
+(fit <- auto.arima(insurance[,1], xreg=Advert[,1:2], d=0))
+```
+
+```{r tvadvertparam, echo=FALSE}
+# Check previous model
+if(fit1$aicc < fit2$aicc | fit3$aicc < fit2$aicc | fit4$aicc < fit2$aicc)
+  stop("TV model not correct")
+
+coef(fit)
+
+# Store coefficients
+phi1 <- coef(fit)['ar1']
+phi2 <- coef(fit)['ar2']
+phi3 <- coef(fit)['ar3']
+intercept <- coef(fit)['intercept']
+gamma0 <- coef(fit)['AdLag0']
+gamma1 <- coef(fit)['AdLag1']
+```
+
+The chosen model has AR(3) errors. The model can be written as:
+$$
+  y_t = `r format(intercept, digits=3)` +
+         `r format(gamma0, digits=3)` x_t +
+         `r format(gamma1, digits=2)` x_{t-1} + n_t,
+$$
+
+where $y_t$ is the number of quotations provided in month $t$, $x_t$ is the advertising expenditure in month $t$,
+$$
+  n_t = `r format(phi1, digits=3)` n_{t-1}
+        `r format(phi2, digits=2)` n_{t-2} +
+        `r format(phi3, digits=2)` n_{t-3} + e_t,
+$$
+
+and $e_t$ is white noise.
+
+We can calculate forcasts using this model if we assume future values for the advertising variable. If we set the future monthly advertising to 8 units, we get the forecasts in Figure 9.13.
+```{r tvadvertf8, fig.cap="Forecasts of monthly insurance quotes, assuming that the future advertising expenditure is 8 units in each future month."}
+
+fc8 <- forecast(fit, h=20,
+  xreg=cbind(AdLag0=rep(8,20), AdLag1=c(Advert[40,1],rep(8,19))))
+
+autoplot(fc8)+ylab("Quotes")+
+  ggtitle("Forecast quotes with future advertising set to 8")
+
+```
+
+## Exercises
+
+
+1.  Consider monthly sales and advertising data for an automotive parts company (data set `advert`).
+a. Plot the data using `autoplot`. Why is it useful to set `facets=TRUE`?
+b. Fit a standard regression model $y_t = a + b x_t + n_t$ where $y_t$ denotes sales and $x_t$ denotes advertising using the `tslm()` function.
+c. Show that the residuals have significant autocorrelation.
+d. What difference does it make you use the \verb|Arima| function instead:
+
+```r
+Arima(advert[,"sales"], xreg=advert[,"advert"], order=c(0,0,0))
+```
+e. Refit the model using `auto.arima()`. How much difference does the error model make to the estimated parameters? What ARIMA model for the errors is selected?
+f. Check the residuals of the fitted model.
+g. Assuming the advertising budget for the next six months is exactly 10 units per month, produce and plot sales forecasts with prediction intervals for the next six months.
+
+2.  This exercise uses data set `huron` giving the level of Lake Huron from 1875--1972.
+a. Fit a piecewise linear trend model to the Lake Huron data with a knot at 1920 and an ARMA error structure.
+b. Forecast the level for the next 30 years.
+
+3. This exercise concerns `motel`: the total monthly takings from accommodation and the total room nights occupied at hotels, motels, and guest houses in Victoria, Australia, between January 1980 and June 1995. Total monthly takings are in thousands of Australian dollars; total room nights occupied are in thousands.
+a. Use the data to calculate the average cost of a night's accommodation in Victoria each month.
+b. Estimate the monthly CPI.
+c. Produce time series plots of both variables and explain why logarithms of both variables need to be taken before fitting any models.
+d. Fit an appropriate regression model with ARIMA errors. Explain your reasoning in arriving at the final model.
+e. Forecast the average price per room for the next twelve months using your fitted model. (Hint: You will need to produce forecasts of the CPI figures first.)
+
+4. We fitted a harmonic regression model to part of the `gasoline` series in Exercise 6 in Section \@ref(Regr-exercises). We will now revisit this model, and extend it to include more data and ARMA errors.
+a. Using `tslm`, fit a harmonic regression with a piecewise linear time trend to the full `gasoline` series. Select the position of the knots in the trend and the appropriate number of Fourier terms to include by minimizing the AICc or CV value.
+b. Now refit the model using `auto.arima` to allow for correlated errors, keeping the same predictor variables as you used with `tslm`.
+c. Check the residuals of the final model using the `checkresiduals()` function. Do they look sufficiently like white noise to continue? If not, try modifying your model, or removing the first few years of data.
+d. Once you have a model with white noise residuals, produce forecasts for the next year.
+
+5. Electricity consumption is often modelled as a function of temperature. Temperature is measured by daily heating degrees and cooling degrees. Heating degrees is $18^\circ$C minus the average daily temperature when the daily average is below $18^\circ$C; otherwise it is zero.  This provides a measure of our need to heat ourselves as temperature falls.  Cooling degrees measures our need to cool ourselves as the temperature rises.  It is defined as the average daily temperature minus $18^\circ$C when the daily average is above $18^\circ$C; otherwise it is zero.  Let $y_t$ denote the monthly total of kilowatt-hours of electricity used, let $x_{1,t}$ denote the monthly total of heating degrees, and let $x_{2,t}$ denote the monthly total of cooling degrees.
+
+ An analyst fits the following model to a set of such data:
+ $$y^*_t = b_1x^*_{1,t} + b_2x^*_{2,t} + n_t,$$
+ where
+ $$(1-B)(1-B^{12})n_t = \frac{1-\theta_1 B}{1-\phi_{12}B^{12} - \phi_{24}B^{24}}e_t$$
+ and $y^*_t = \log(Y_t)$, $x^*_{1,t} = \sqrt{x_{1,t}}$ and $x^*_{2,t}=\sqrt{x_{2,t}}$.
+
+a. What sort of ARIMA model is identified for $N_t$?
+b. The estimated coefficients are
+
+|Year              | 1964| 1965| 1966| 1967| 1968|
+|:-----------------|----:|----:|----:|----:|----:|
+|Millions of tons  | 467 | 512 | 534 | 552 | 545 |
+
+| Parameter   | Estimate   | s.e.       | $Z$        | $P$-value  |
+| :---------- | :--------: | :--------: | :--------: | :--------: |
+| $b_1$       | 0.0077     | 0.0015     | 4.98       | 0.000      |
+| $b_2$       | 0.0208     | 0.0023     | 9.23       | 0.000      |
+| $\theta_1$  | 0.5830     | 0.0720     | 8.10       | 0.000      |
+| $\phi_{12}$ | -0.5373    | 0.0856     | -6.27      | 0.000      |
+| $\phi_{24}$ | -0.4667    | 0.0862     | -5.41      | 0.000      |
+
+Explain what the estimates of $b_1$ and $b_2$ tell us about electricity consumption.
+
+c. Write the equation in a form more suitable for forecasting.
+d. Describe how this model could be used to forecast electricity demand for the next 12 months.
+e. Explain why the $N_t$ term should be modelled with an ARIMA model rather than modeling the data using a standard regression package.  In your discussion, comment on the properties of the estimates, the validity of the standard regression results, and the importance of the $N_t$ model in producing forecasts.
+
+6. For the retail time series considered in earlier chapters:
+a. Develop an appropriate dynamic regression model with Fourier terms for the seasonality. Use the AIC to select the number of Fourier terms to include in the model. (You will probably need to use the same Box-Cox transformation you identified previously.)
+b. Check the residuals of the fitted model. Does the residual series look like white noise?
+c. Compare the forecasts with those you obtained earlier using alternative models.
+
+## Further reading
+A detailed discussion of dynamic regression models is provided in @Pankratz91. A generalization of dynamic regression models, known as "transfer function models", is discussed in @BJRL15.
+
+# Forecasting hierachical or grouped time series
+*Warning: this is a more advanced chapter and assumes a knowledge of some basic matrix algebra.
+
+Time series can often be naturally **disaggregated** by various attributes of interest. For example, the total number of bicycles sold by a cycling manufacturer can be disaggregated by product type such as road bikes, mountain bikes, children’s bikes and hybrids. Each of these can be disaggregated into finer categories. For example hybrid bikes can be divided into city, commuting, comfort, and trekking bikes; and so on. These categories are nested within the larger group categories, and so the collection of time series follow a hierarchical aggregation structure. Therefore we refer to these as “hierarchical time series”, the topic of Section 10.1.
+
+**Hierarchical time series** often arise due to *geographic divisions*. For example, the total bicycle sales can be disaggregated by country, then within each country by state, within each state by region, and so on down to the outlet level.
+
+Our bicycle manufacturer may disaggregate sales by both product type and by geographic location. Then we have a more complicated aggregation structure where the product hierarchy and the geographic hierarchy can both be used together. We usually refer to these as “grouped time series”, and discuss them in Section 10.2.
+
+It is common to produce *disaggregated forecasts* based on *disaggregated time series*, and we usually require the forecasts to add up in the same way as the data. For example, forecasts of regional sales should add up to give forecasts of state sales, which should in turn add up to give a forecast for the national sales.
+
+In this chapter we discuss forecasting large collections of time series that must add up in some way. The challenge is that we require forecasts that are **coherent** across the aggregation structure. That is, we require forecasts to add up in a manner that is consistent with the aggregation structure of the collection of time series. In Sections 10.3–10.7 we discuss several methods for producing coherent forecasts for both hierarchical and grouped time series.
+
+## Hierachical time series
+Figure 10.1 shows $K=2$ level hierachical structure.  At the top of the hierarchy, at level 0, is the "Total", the most aggregate level of the data. We denote as $y_t$ the $t$th observation of the "Total" series for $t=1,\dots,T$. The "Total" is disaggregated into two series at level 1 and each of these into three and two series respectively at the bottom-level of the hierarchy. Below the top most aggregate level, we denote as $\y{j}{t}$ the $t$th observation of the series which corresponds to node $j$. For example $y_{A,t}$ denotes the $t$th observation of the series corresponding to node A at level 1, $y_{AB,t}$ denotes the $t$th observation of the series corresponding to node AB at level 2, and so on.
+
+The total number of series in the hierarchy is $n=1+2+5=8$. We denote as $m$ the number of series at the bottom-level, a dimenstion that is important in what follows. In this case, $m=5$. Note that always $n>m$.
+```{r HierTree, echo=FALSE, fig.cap="A two level hierarchical tree diagram.", message=FALSE, warning=FALSE, fig.show = "hold",fig.height=8,fig.width=12}
+
+g <- igraph::graph_from_literal(Total--A:B, A--AA:AB:AC, B--BA:BB)
+layout <- igraph::layout_as_tree(g, root = "Total")
+igraph::V(g)$color <- c("Thistle", "GreenYellow", "LightBlue",
+  rep("GreenYellow", 3), rep("LightBlue", 2))
+igraph::V(g)$label.cex<-2
+
+plot(g, layout = layout,vertex.size=40)
+```
+
+For any time $t$, the observations at the bottom-level of the hierarchy will aggregate to the observations of the series above. For example,
+\begin{equation}
+y_{t}=\y{AA}{t}+\y{AB}{t}+\y{AC}{t}+\y{BA}{t}+\y{BB}{t}
+  (\#eq:toplevel)
+\end{equation} and
+\begin{equation} \y{A}{t}=\y{AA}{t}+\y{AB}{t}+\y{AC}{t}\quad \text{and} \quad  \y{B}{t}=\y{BA}{t}+\y{BB}{t}.
+(\#eq:middlelevel)
+\end{equation}
+Substituting \@ref(eq:middlelevel) into \@ref(eq:toplevel) we also get $y_{t}=\y{A}{t}+\y{B}{t}$. These equations can be thought of as aggregation constraints or summing equalities and can be more efficienlty represented using matrix notation. We construct an $n\times m$ matrix $\bm{S}$ referred to as the *summing matrix*  which dictates how the bottom-level series are aggregated, consistent with the aggregation structure. For the hierarchical structure in Figure \@ref(fig:HierTree) we write
+$$
+  \begin{bmatrix}
+    y_{t} \\
+    \y{A}{t} \\
+    \y{B}{t} \\
+    \y{AA}{t} \\
+    \y{AB}{t} \\
+    \y{AC}{t} \\
+    \y{BA}{t} \\
+    \y{BB}{t}
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    1 & 1 & 1 & 1 & 1 \\
+    1 & 1 & 1 & 0 & 0 \\
+    0 & 0 & 0 & 1 & 1 \\
+    1  & 0  & 0  & 0  & 0  \\
+    0  & 1  & 0  & 0  & 0  \\
+    0  & 0  & 1  & 0  & 0  \\
+    0  & 0  & 0  & 1  & 0  \\
+    0  & 0  & 0  & 0  & 1
+  \end{bmatrix}
+  \begin{bmatrix}
+    \y{AA}{t} \\
+    \y{AB}{t} \\
+    \y{AC}{t} \\
+    \y{BA}{t} \\
+    \y{BB}{t}
+  \end{bmatrix}
+$$
+or in more compact notation
+\begin{equation}
+  \bm{y}_t=\bm{S}\bm{y}_{K,t},
+  (\#eq:smatrix)
+\end{equation}
+where $\bm{y}_t$ is a $n$-dimensional vector of all the observations in the hierarchy at time $t$, $\bm{S}$ is the summing matrix as defined above, and $\bm{y}_{K,t}$ is an $m$-dimensional vector of all the observations in the bottom-level of the hierarchy at time $t$. Note that the first row in the summing $\bm{S}$ represents equation \@ref(eq:toplevel) above, the second and third row represent \@ref(eq:middlelevel). The rows below these comprise an $m$-dimensional identity matrix $\bm{I}_m$ so that each bottom-level observation on the right hand side of the equation is equal to itself in the left hand side.
+
+### Example: Australian tourism hierarchy 
+Australia is divided into eight geographical areas (some referred to as states and others as territories) iwth each one having its own government and some economic and administrative autonomy. Each of these can be further subdivided into smaller areas of iterest referred to as zones. 
+
+ usiness planners and tourism authorities are interested in forecasts for the whole of Australia, the states and the territories, and also the regions. In this example we concentrate on quarterly domestic tourism demand, measured as the number of visitor nights Australians spend away from home, for the six states of Australia, namely: New South Wales (NSW), Queensland (QLD), South Australia (SAU), Victoria (VIC), Western Australia (WA) and other (OTH). For each of these we consider visitor nights within the following zones. 
+ 
+ |State  |Zones                              |
+|:------|:---------------------------------------------------------------------|
+|NSW    |Metro (NSWMetro), North Coast (NSWNthCo), South Coast (NSWSthCo), South Inner (NSWSthIn), North Inner (NSWNthIn)|
+|QLD    |Metro (QLDMetro), Central (QLDCntrl), North Coast (QLDNthCo)|
+|SAu    |Metro (SAUMetro), Costal (SAUCoast), Inner (SAUInner)|
+|VIC    |Metro (VICMetro), West Coast (VICWstCo), East Coast (VICEstCo), Inner (VICInner)|
+|WAu    |Metro (WAUMetro), Costal (WAUCoast), Inner (WAUInner)|
+|OTH    |Metro (OTHMetro), Non-Metro (OTHNoMet)|
+
+In summary, we consider five zones for NSW, four zones for VIC, and three zones for QLD, SAU and WAU. Note that Metro zones contain the capital cities and surrounding areas. For further details on these geographic areas, please refer to Appendix C in [Wickramasuriya, Athanasopoulos, & Hyndman (2018)](https://otexts.org/fpp2/hts.html#ref-Mint).
+
+To create a hierarchical time series we use the `hts` function as shown in the code below. The function requires as inputs the bottom-level time series and information about the hierarchical structure. `vn2` is a time series matrix containing the bottom-level series. There are alternative ways to pass to the function the structure of the hieararchy. In this case we are using the `characters` input. The first three characters of each column name of `vn2` capture the categories at the first level of the hierarchy (States). The following five characters capture the bottom-level categories (Zones).
+
+```{r echo=TRUE, message=FALSE, warining=FALSE}
+library(hts)
+
+tourism.hts <- hts(visnights, characters=c(3,5))
+tourism.hts %>% aggts(levels=0:1) %>% 
+  autoplot(facets=T)+
+  xlab("Year")+ylab("millions")+ggtitle("visitor nights")
+```
+
+The top plot in Figure \@ref(fig:tourismStates) shows the total number of visitor nights for the total of Australia while the plots bellow show the visitor nights disaggregated by state. These reveal diverse and rich dynamics at the aggregate national level and the first level of disaggregation across each state. The `aggts` function extracts time series from a `hts` object for any level of aggregation.
+
+```{r tourismStates, fig.width=10, fig.asp=0.7, echo=FALSE, fig.cap="Australian domestic visitor nights over the period 1998 Q1 to 2016 Q4 disaggregated by State.", warning=FALSE,message=FALSE,echo=TRUE}
+
+tourismL0 <- aggts(tourism.hts, levels=0)
+p1 <- autoplot(tourismL0)+
+  xlab("Year")+
+  ylab("Visitor nights ('000)")+
+  scale_color_discrete(guide=guide_legend(title="State"))
+
+tourismL1 <- aggts(tourism.hts, levels = 1)
+p2<-autoplot(tourismL1[,c(1,3,5)]) + 
+  xlab("Year") +
+  ylab("Visitor nights ('000)")+
+  scale_colour_discrete(guide = guide_legend(title = "State"))
+ 
+p3<-autoplot(tourismL1[,c(2,4,6)]) + 
+  xlab("Year") +
+  ylab("Visitor nights ('000)")+
+  scale_colour_discrete(guide = guide_legend(title = "State"))
+
+lay=rbind(c(1,1),c(2,3))
+gridExtra::grid.arrange(p1, p2,p3, layout_matrix=lay)
+
+```
+
+The plots in Figure \@ref(fig:tourismZones) below show the bottom-level time series, i.e., the visitor nights for each zone. These help us visualise the diverse individual dynamics within each zones and assist in identifying unique and important time series. Notice for example the costal WAU zone which shows significant growth over the last few years.
+
+```{r tourismZones, fig.width=10, fig.asp=0.8, echo=FALSE, fig.cap="Australian domestic visitor nights over the period 1998 Q1 to 2016 Q4 disaggregated by Zones.", warning=FALSE,message=FALSE}
+
+require(tidyverse)
+require(reshape2)
+require(zoo)
+
+tourismL2 <- aggts(tourism.hts, levels = 2)
+nodes <- tourism.hts$nodes
+nodesB <- as.numeric(nodes[[length(nodes)]], deparse = FALSE)
+ends <- cumsum(nodesB)
+start <- c(1, ends[1:(length(nodesB) - 1)] + 1)
+time <- tibble(Time = zoo::as.Date(tourismL2))
+
+plotsL2 <- list()
+
+#i=1
+for(i in 1:length(start))
+{
+  datL2 <- bind_cols(time, as_tibble(tourismL2[, start[i]:ends[i]]))
+  meltL2 <- melt(datL2, id = "Time")
+  plotsL2[[i]] <-   ggplot(meltL2) + geom_line(aes(x= Time, y = as.numeric(value), group = variable, color = variable)) +
+    scale_colour_discrete(guide = guide_legend(title = "Zone")) +
+    xlab("Year") + 
+    ylab("Visitor nights ('000)")
+}
+
+
+gridExtra::grid.arrange(plotsL2[[1]],plotsL2[[2]],plotsL2[[3]],
+                        plotsL2[[4]],plotsL2[[5]],plotsL2[[6]], nrow=3)
+
+```
+
+## Grouped time series {#Hier:grouped-ts}
+Another possibility is that series can be naturally grouped together based on attributes without necessarily imposing a hierarchical structure. For example the bicycles sold by the warehouse can be for males, females or unisex. Frames can be carbon, aluminium or steel. They can be single speed or have multiple gears. We can also get a similar structure when we combine two hierarchical structures. For example the bicycle manufacturer may disaggregate sales by product and also by geographical location. We refer to these as *grouped time series*. With grouped time series we still have a hierarchical structure however the structure does not naturally disaggregate in a unique way. For example we can disaggregate the bicycles by product type and then geographical location but also vice versa.
+
+Figure \@ref(fig:GroupTree) below shows a $K=2$-level grouped structure. At the top of the grouped structure, is the "Total", the most aggregate level of the data, again represented by $y_t$. The "Total" can be disaggregated by attributes (A, B) forming series $\y{A}{t}$ and $\y{B}{t}$, or by attributes (X, Y) forming series $\y{X}{t}$ and $\y{Y}{t}$. At the bottom the data are disaggregated by both attributes.
+
+```{r GroupTree, echo=FALSE, fig.cap="Alternative representations of a two level grouped structure.", out.width="49.9%", fig.show = "hold",fig.height=14,fig.width=12}
+
+g <- igraph::graph_from_literal(Total--A:B, A--AX:AY, B--BX:BY)
+layout <- igraph::layout_as_tree(g, root = "Total")
+igraph::V(g)$color <- c("Thistle", "GreenYellow", "LightBlue",
+  rep("GreenYellow", 2), rep("LightBlue", 2))
+igraph::V(g)$label.cex<-3
+plot(g, layout = layout,vertex.size=54)
+
+g2 <- igraph::graph_from_literal(Total--X:Y, X--AX:BX, Y--AY:BY)
+layout2 <- igraph::layout_as_tree(g2, root = "Total")
+igraph::V(g2)$color <- c("Thistle", "GreenYellow", "LightBlue",
+  rep("GreenYellow", 2), rep("LightBlue", 2))
+igraph::V(g2)$label.cex<-3
+plot(g2, layout = layout2,vertex.size=54)
+```
+
+This example shows that there are alternative aggregation paths for grouped structures. For any time $t$, as with the hierachical strucuture, 
+\begin{equation*}
+y_{t}=\y{AX}{t}+\y{AY}{t}+\y{BX}{t}+\y{BY}{t}.
+\end{equation*}
+However, for the first level of the grouped structure,
+\begin{equation} \y{A}{t}=\y{AX}{t}+\y{AY}{t}\quad \quad \y{B}{t}=\y{BX}{t}+\y{BY}{t}
+(\#eq:middlelevelAB)
+\end{equation} but also
+\begin{equation} \y{X}{t}=\y{AX}{t}+\y{BX}{t}\quad \quad \y{Y}{t}=\y{AY}{t}+\y{BY}{t}
+(\#eq:middlelevelXY).
+\end{equation}
+
+These equalities can again be represented by the summing matrix $\bm{S}$ which recall is of dimension $n\times m$. The total number of series is $n=9$ with $m=4$ series at the bottom-level. For the grouped structure in Figure \@ref(fig:GroupTree) we write
+$$
+ \begin{bmatrix}
+     y_{t} \\
+    \y{A}{t} \\
+    \y{B}{t} \\
+    \y{X}{t} \\
+    \y{Y}{t} \\
+    \y{AX}{t} \\
+    \y{AY}{t} \\
+    \y{BX}{t} \\
+    \y{BY}{t}
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    1 & 1 & 1 & 1 \\
+    1 & 1 & 0 & 0 \\
+    0 & 0 & 1 & 1 \\
+    1 & 0 & 1 & 0 \\
+    0 & 1 & 0 & 1 \\
+    1 & 0 & 0 & 0 \\
+    0 & 1 & 0 & 0 \\
+    0 & 0 & 1 & 0 \\
+    0 & 0 & 0 & 1
+  \end{bmatrix}
+  \begin{bmatrix}
+    \y{AX}{t} \\
+    \y{AY}{t} \\
+    \y{BX}{t} \\
+    \y{BY}{t}
+  \end{bmatrix}
+$$
+
+where now the second and third rows of $\bm{S}$ represent \@ref(eq:middlelevelAB) and the fourth and fifth rows represent \@ref(eq:middlelevelXY).
+
+where now the second and third rows of $\bm{S}$ represent \@ref(eq:middlelevelAB) and the fourth and fifth rows represent \@ref(eq:middlelevelXY).
+
+Grouped time series can be thought of as hierachical time series that do not impose a unique hierachical structure in the sense that the order by which the series can be grouped is not unique.
+
+### Example: Australian prison population{-}
+
+The left plot in the top row of Figure \@ref(fig:prison) shows the total number of prisoners in Australia over the period 2005 Q1 to 2016 Q4. This represents the top-level series in the grouping structure. The rest of the plots show the prison population grouped by (i) state^[Australia comprises eight geographical areas six states and two territories: Australian Capital Territory, New South Wales, Northern Terrirory, Queensland, South Australia, Tasmania, Victoria, Western Australia. In this example we consider all eight.] (ii) legal status, whether prisoners have already been sentenced or are in remand waiting for a sentence, and (iii) gender.
+
+```{r prison, fig.width=10, fig.asp=.8, echo=FALSE, ig.cap="Total Australian adult prison population and Australian prison population grouped by state, by legal status and by gender.", warning=FALSE,message=FALSE}
+
+library(fpp2)
+fpp2::prisonLF %>% head()
+
+# prisonLF$t <- as.Date(prisonLF$date, format = "%Y/%m/%d")
+prisonLF$count <- as.numeric(prisonLF$count)
+prisonLF$quarter <- as.Date(cut(prisonLF$t, breaks = "quarter"))
+prisonLF$year <- as.Date(cut(prisonLF$t, breaks="year"))
+
+library(scales)
+
+# total
+p1 <- ggplot(data=prisonLF, aes(x=quarter, y=count))+
+  stat_summary(fun.y=sum,geom="line")+
+  scale_x_date(labels=date_format("%m/%Y"), date_breaks = "8 months")+
+  ggtitle("Australian prison population: total") +
+  theme(plot.title = element_text(size=12)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  xlab("Quarter") +
+  ylab("Number of prisoners")+
+  scale_colour_discrete(guide = guide_legend(title = "Zone"))
+
+#group by state
+p2<-ggplot(data = prisonLF, aes(x = quarter, y = count, group = state, colour = state))  +
+  stat_summary(fun.y = sum, geom = "line")+
+  scale_x_date(labels = date_format("%m/%Y"), date_breaks= "18 months") +
+  ggtitle("Grouped by state") +
+  theme(plot.title = element_text(size=12)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  xlab("Quarter") +
+  ylab("Number of prisoners") +
+  scale_y_continuous(breaks = c(0,2500, 5000, 7500, 10000, 12500))+
+  scale_colour_discrete(guide = guide_legend(title = "State"))
+
+#group by legal status
+p3<-ggplot(data = prisonLF, aes(x = quarter, y = count, group = legal, colour = legal))  +
+  stat_summary(fun.y = sum, geom = "line") +
+  scale_x_date(labels = date_format("%m/%Y"), date_breaks= "18 months") +
+  ggtitle("Grouped by legal status") +
+  theme(plot.title = element_text(size=12)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  xlab("Quarter") +
+  ylab("Number of prisoners") +
+  scale_y_continuous(breaks = c(5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000))+
+  scale_colour_discrete(guide = guide_legend(title = "Legal status"))
+
+#group by gender
+p4<-ggplot(data = prisonLF, aes(x = quarter, y = count, group = gender, colour = gender))  +
+  stat_summary(fun.y = sum, geom = "line") +
+  scale_x_date(labels = date_format("%m/%Y"), date_breaks= "18 months") +
+  ggtitle("Grouped by gender") +
+  theme(plot.title = element_text(size=12)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  xlab("Quarter") +
+  ylab("Number of prisoners") +
+  scale_y_continuous(breaks = c(5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000))+
+  scale_colour_discrete(guide = guide_legend(title = "Gender"))
+
+gridExtra::grid.arrange(p1, p2, p3, p4, nrow=2)
+```
+
+To create a grouped time series, we use the `gts` function as shown below. Similarly to the hts function, the gts function requires as inputs the bottom-level time series and informatio about the grouping structure. `prison` is a time series matrix containing the bottom-level times series. Similarly to the hts function the information about the grouping structure can be passed in using the `characters` input. An alternative is to be more explicit about the labelling of the series and use the `groups` input. The code below shows examples for both these.
+
+```{r echo=TRUE}
+
+fpp2::prison %>% as.tibble() %>% head()
+
+library(hts)
+
+prison.gts <- gts(prison/1e3, characters = c(3,1,9),
+  gnames = c("State", "Gender", "Legal",
+             "State*Gender", "State*Legal",
+             "State*Gender*Legal"))
+```
+
+One way to plot the main groups is as follows.
+```{r}
+prison.gts %>% aggts(level=0:3) %>% autoplot()
+```
+
+But with a little more work, we can construct Figure 10.5 using the following code.
+```{r}
+
+p1 <- prison.gts %>% aggts(level=0) %>%
+  autoplot() + ggtitle("Australian prison population") +
+    xlab("Year") + ylab("Total number of prisoners ('000)")
+groups <- aggts(prison.gts, level=1:3)
+cols <- sample(scales::hue_pal(h=c(15,375),
+          c=100,l=65,h.start=0,direction = 1)(NCOL(groups)))
+p2 <- as_tibble(groups) %>%
+  gather(Series) %>%
+  mutate(Date = rep(time(groups), NCOL(groups)),
+         Group = str_extract(Series, "([A-Za-z ]*)")) %>%
+  ggplot(aes(x=Date, y=value, group=Series, colour=Series)) +
+    geom_line() +
+    xlab("Year") + ylab("Number of prisoners ('000)") +
+    scale_colour_manual(values = cols) +
+    facet_grid(.~Group, scales="free_y") +
+    scale_x_continuous(breaks=seq(2006,2016,by=2)) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+gridExtra::grid.arrange(p1, p2, ncol=1)
+```
+
+Plots of other group combinations can be obtained similarly. Figure 10.6 shows the Australian prison population disaggregated by all possible combinations of two attributes at a time. The top plot shows the prison population disaggregated by state and legal status, the middle panel shows the disaggregation by state and gender and the bottom panel shows the disaggregation by legal status and gender.
+
+## The bottom-up approach
+A commonly applied method for generating coherent forecasts is the bottom-up approach. This approach involves first generating  base forecasts for each series at the bottom-level and then aggregating these upwards to produce forecasts for all the series in the structure.
+
+For example, for the hierarchy of Figure \@ref(fig:HierTree) we first generate  $h$-step-ahead base forecasts for each of the bottom-level series: $$\yhat{AA}{h},~~\yhat{AB}{h},~~\yhat{AC}{h},~~ \yhat{BA}{h}~~\text{and}~~\yhat{BB}{h}.$$
+
+Aggregating these up the hierarchy we get $h$-step-ahead coherent forecasts for the rest of the series: $$\tilde{y}_{h}=\yhat{AA}{h}+\yhat{AB}{h}+\yhat{AC}{h}+\yhat{BA}{h}+\yhat{BB}{h},~~~\ytilde{A}{h}= \yhat{AA}{h}+\yhat{AB}{h}+\yhat{AC}{h}$$ and $$\ytilde{B}{h}= \yhat{BA}{h}+\yhat{BB}{h}.$$
+
+As in equation \@ref(eq:smatrix) we can employ the summing matrix here and write
+$$
+  \begin{bmatrix}
+    \tilde{y}_{h} \\
+    \ytilde{A}{h} \\
+    \ytilde{B}{h} \\
+    \ytilde{AA}{h} \\
+    \ytilde{AB}{h} \\
+    \ytilde{AC}{h} \\
+    \ytilde{BA}{h} \\
+    \ytilde{BB}{h}
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    1 & 1 & 1 & 1 & 1 \\
+    1 & 1 & 1 & 0 & 0 \\
+    0 & 0 & 0 & 1 & 1 \\
+    1  & 0  & 0  & 0  & 0  \\
+    0  & 1  & 0  & 0  & 0  \\
+    0  & 0  & 1  & 0  & 0  \\
+    0  & 0  & 0  & 1  & 0  \\
+    0  & 0  & 0  & 0  & 1
+  \end{bmatrix}
+  \begin{bmatrix}
+    \yhat{AA}{h} \\
+    \yhat{AB}{h} \\
+    \yhat{AC}{h} \\
+    \yhat{BA}{h} \\
+    \yhat{BB}{h}
+  \end{bmatrix}.
+$$
+
+In general, using more compact notation, the bottom-up approach can be represented as
+$$
+  \tilde{\bm{y}}_{h}=\bm{S}\hat{\bm{y}}_{K,h}
+$$
+where $\tilde{\bm{y}_t}$ is an $n$-dimensional vector of coherent $h$-step-ahead forecasts of each time series within any aggregation structure and $\hat{\bm{y}}_{K,h}$ is an $m$-dimensional vector of $h$-step-ahead base forecasts for each of the bottom-level series of any aggregation structure. Note that for the bottom-up approach the coherent forecasts for the bottom-level series are equal to the base forecasts, i.e., $\tilde{\bm{y}}_{K,t}=\hat{\bm{y}}_{K,t}$.
+
+The greatest advantage of this approach is that we are forecasting at the bottom-level of a structure and therefore no information is lost due to aggregation. On the other hand bottom-level data can be quite noisy and more challenging to model and forecast.
+
+The bottom-up approach is implemented in the `forecast` package by setting 
+
+```r
+forecast(..., method="bu",...)
+```
+
+## Top-down approaches
+
+Top-down approaches involve first generating forecasts for the "Total" series $y_t$ on the top of the aggregation structure and then disaggregating these downwards. We let $p_1,\dots,p_{m}$ be a set of proportions which dictate how the base forecasts of the "Total" series are to be distributed to revised forecasts for each series at the bottom-level of the structure. For example for the hierarchy of Figure \@ref(fig:HierTree) using proportions $p_1,\dots,p_{5}$ we get, 
+$$
+  \ytilde{AA}{t}=p_1\hat{y}_t,~~~\ytilde{AB}{t}=p_2\hat{y}_t,~~~\ytilde{AC}{t}=p_3\hat{y}_t,~~~\ytilde{BA}{t}=p_4\hat{y}_t~~~\text{and}~~~~~~\ytilde{BB}{t}=p_5\hat{y}_t.
+$$
+Using matrix notation we can stack the set of proportions in a $m$-dimensional column vector $\bm{p}=(p_1,\ldots,p_{m})'$^[$A'$ denotes the transpose of $A$.] and write
+$$\tilde{\bm{y}}_{K,t}=\bm{p}\hat{y}_t$$
+Once the bottom-level $h$-step-ahead forecasts have been generated these can be aggregated to generate coherent forecasts for the rest of the series. In general using the summing matrix and for a specified set of proportions, top-down approaches can be represented as,
+$$\tilde{\bm{y}}_h=\bm{S}\bm{p}\hat{y}_t.$$
+Note that for all top-down approaches the top-level coherent forecasts are equal to the top-level base forecasts, i.e., $\tilde{y}_{h}=\hat{y}_{h}$.
+
+The most common top-down approaches specify proportions based on the historical proportions of the data. The two most common versions follow. These peformed well in the study of @GroSoh1990 hence the acronyms in the `forecast` package.
+
+### Average historical proportions
+$$
+  p_j=\frac{1}{T}\sum_{t=1}^{T}\frac{y_{j,t}}{{y_t}}
+$$
+for $j=1,\dots,m$. Each proportion $p_j$ reflects the average of the historical proportions of the bottom-level series $y_{j,t}$ over the period $t=1,\dots,T$ relative to the total aggregate $y_t$.
+
+This approach is implemented in the `forecast` package by setting 
+```r
+forecast(...,method = "tdgsa",...). 
+```
+
+### Proportions of the historical averages
+$$
+  p_j={\sum_{t=1}^{T}\frac{y_{j,t}}{T}}\Big/{\sum_{t=1}^{T}\frac{y_t}{T}}
+$$
+
+for $j=1,\dots,m$. Each proportion $p_j$ captures the average historical value of the bottom-level series $y_{j,t}$ relative to the average value of the total aggregate $y_t$.
+
+This approach is implemented in the `forecast` package by setting 
+```r
+forecast(..., method = "tdgsf", ...). 
+```
+The greatest attribute of such top-down approaches is their simplicity to apply. One only needs to model and generate forecasts for the most aggregated top-level series. In general these approaches seem to produce quite reliable forecasts for the aggregate levels and they are very useful with low count data. On the other hand, their greatest disadvantage is the loss of information due to aggregation. Using such top-down approaches, we are unable to capture and take advantage of individual series characteristics such as time dynamics, special events, etc.
+
+## Forecast proportions
+
+An alternative approach that improves on the historical and static nature of the proportions specified above is to use forecast proportions introduced in @AthEtAl2009.
+
+
+
+
+
+
+
 
