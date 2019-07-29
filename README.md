@@ -4,7 +4,7 @@
 - Package: `forecast` from CRAN  
 - Dataset: `fpp2` from CRAN  
 - Online textbook: https://otexts.org/fpp2/ by `bookdown`  
-- Webpage introducing time series forecasting by `forecast` package: https://robjhyndman.com/seminars/uwa2017/  
+- [Webpage](https://robjhyndman.com/seminars/uwa2017/  ) introducing time series forecasting by `forecast` package: 
 
 ## tidyverts  
 New packages in addition to `forecast`:   
