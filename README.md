@@ -15,3 +15,5 @@ New packages in addition to `forecast`:
 
 [The workshop by Rob Hyndoman](https://github.com/robjhyndman/ISI_Workshop_2019) covers `tsibble` and `fable` package usage.  
 Repo: https://github.com/tidyverts  
+Blog post:  
+- introducing fable https://blog.mitchelloharawild.com/blog/fable/  
