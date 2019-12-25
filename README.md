@@ -12,7 +12,7 @@ New text book `fpp3`:
 ## tidyverts  
 New packages in addition to `forecast`:   
 - [`tsibble`](https://github.com/tidyverts/tsibble):Tidy Temporal Data Frames and Tools  - [video](https://www.youtube.com/watch?v=MemnYSGeJ34)  
-- [`fable`](https://github.com/tidyverts/fable): Tidy time series forecasting  - [video](https://www.youtube.com/watch?v=MemnYSGeJ34)
+- [`fable`](https://github.com/tidyverts/fable): Tidy time series forecasting  - [video](https://www.youtube.com/watch?v=MemnYSGeJ34)  
 There is also the bookdown material(Tidy time series forecasting by fable)[https://tidyverts.github.io/tidy-forecasting-principles/]
 
 - [`sugrrants`](https://pkg.earo.me/sugrrants/index.html): visualization   
